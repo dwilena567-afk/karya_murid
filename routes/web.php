@@ -10,7 +10,7 @@ use App\Http\Controllers\KeranjangController;
 use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\VerifikasiController;
 
-Route::get('/', function () {
+Route::get('/a', function () {
     return view('welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
@@ -23,7 +23,11 @@ Route::get('/', function () {
 Route::get('/katalog', [KatalogController::class, 'index'])->name('katalog.index');
 Route::get('/katalog/{id}', [KatalogController::class, 'show'])->name('katalog.show');
 
-// Rute Keranjang dan Checkout (Untuk User yang sudah login)
+Route::get('/', function () {
+    return view('beranda.index');
+})->name('beranda.index');
+
+// Rute Keranjang dan Checkout 
 Route::middleware(['auth'])->group(function () {
     Route::get('/keranjang', [KeranjangController::class, 'index'])->name('keranjang.index');
     Route::post('/keranjang', [KeranjangController::class, 'store'])->name('keranjang.store');

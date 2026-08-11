@@ -15,9 +15,12 @@ return new class extends Migration {
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Pembuat karya
             $table->string('judul');
             $table->text('deskripsi');
-            $table->decimal('harga', 12, 2);
-            $table->integer('stok')->default(1);
+           
+           
             $table->string('gambar')->nullable();
+            $table->string('kategori'); // Contoh isi: 'lukisan', 'patung', dll
+            $table->integer('harga');
+            $table->integer('stok')->default(1);
             $table->enum('status_verifikasi', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamps();
         });
