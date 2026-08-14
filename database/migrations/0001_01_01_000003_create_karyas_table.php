@@ -18,7 +18,7 @@ return new class extends Migration {
            
            
             $table->string('gambar')->nullable();
-            $table->string('kategori'); // Contoh isi: 'lukisan', 'patung', dll
+            $table->foreignId('kategori_id')->constrained('kategoris')->onDelete('cascade');
             $table->integer('harga');
             $table->integer('stok')->default(1);
             $table->enum('status_verifikasi', ['pending', 'approved', 'rejected'])->default('pending');

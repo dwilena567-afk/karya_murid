@@ -27,12 +27,20 @@ Route::get('/', function () {
     return view('beranda.index');
 })->name('beranda.index');
 
+
+
+
 // Rute Keranjang dan Checkout 
 Route::middleware(['auth'])->group(function () {
     Route::get('/keranjang', [KeranjangController::class, 'index'])->name('keranjang.index');
     Route::post('/keranjang', [KeranjangController::class, 'store'])->name('keranjang.store');
-
     Route::post('/checkout', [TransaksiController::class, 'store'])->name('checkout.store');
+    Route::get('/karyamu', function () {
+       return view('karyamu.index', [
+           
+            'karyas' => collect([]) 
+        ]);
+    })->name('karyamu.index');
 });
 
 // Rute Verifikasi Karya (Untuk Admin/Guru)

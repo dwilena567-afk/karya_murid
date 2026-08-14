@@ -9,7 +9,7 @@ class KatalogController extends Controller
     public function index(Request $request)
     {
         // 1. Mulai query, hanya ambil karya yang sudah disetujui (approved)
-        $query = Karya::with('pembuat')->where('status_verifikasi', 'approved');
+        $query = Karya::with(['pembuat', 'kategori'])->where('status_verifikasi', 'approved');
 
         // 2. Filter Pencarian Judul
         if ($request->filled('search')) {
@@ -18,7 +18,7 @@ class KatalogController extends Controller
 
         // 3. Filter Kategori
         if ($request->filled('kategori')) {
-            $query->where('kategori', $request->kategori);
+            $query->where('kategori_id', $request->kategori);
         }
 
         // 4. Filter Rentang Harga (Min dan Max)
