@@ -123,7 +123,7 @@
 
             <aside class="sidebar-panel p-4 d-none d-md-block shadow-sm">
                 <h6 class="fw-bold text-primary-custom mb-2"><i class="bi bi-search me-1"></i> Cari</h6>
-                <form action="{{ route('katalog.index') }}" method="GET" class="mb-4">
+                <form action="{{ request()->url() }}" method="GET" class="mb-4">
                     <div class="input-group input-group-sm">
                         <input type="text" name="search" class="form-control border-custom" placeholder="Nama produk..."
                             value="{{ request('search') }}">
@@ -134,7 +134,7 @@
 
                 <h6 class="fw-bold text-primary-custom mb-3 border-bottom border-custom pb-2"><i
                         class="bi bi-funnel me-1"></i> Filter</h6>
-                <form action="{{ route('katalog.index') }}" method="GET" class="d-flex flex-column gap-3 small">
+                <form action="{{ request()->url() }}" method="GET" class="d-flex flex-column gap-3 small">
 
                     @if(request('search'))
                         <input type="hidden" name="search" value="{{ request('search') }}">
@@ -174,7 +174,7 @@
                     <div class="d-flex flex-column gap-2 mt-2">
                         <button type="submit" class="btn bg-primary-custom text-white btn-sm fw-bold">Terapkan
                             Filter</button>
-                        <a href="{{ route('katalog.index') }}" class="btn btn-outline-danger btn-sm">Reset</a>
+                        <a href="{{ request()->url() }}" class="btn btn-outline-danger btn-sm">Reset</a>
                     </div>
                 </form>
             </aside>

@@ -29,7 +29,7 @@
     <h4 class="fw-bold text-primary-custom m-0">Kelola Karyamu</h4>
     
     <!-- Tombol Tambah Karya -->
-    <a href="#" class="btn bg-accent fw-bold shadow-sm">
+    <a href="{{ route('karyamu.create') }}" class="btn bg-accent fw-bold shadow-sm">
         <i class="bi bi-plus-lg me-1"></i> Tambah Karya
     </a>
 </div>
@@ -72,10 +72,10 @@
 
                 <!-- Tombol Aksi (Edit & Hapus) -->
                 <div class="mt-auto pt-3 action-buttons d-flex gap-2">
-                    <a href="#" class="btn btn-sm btn-outline-primary flex-grow-1 fw-bold" title="Edit Karya">
+                    <a href="{{ route('karyamu.edit', $karya->id) }}" class="btn btn-sm btn-outline-primary flex-grow-1 fw-bold" title="Edit Karya">
                         <i class="bi bi-pencil-square me-1"></i> Edit
                     </a>
-                    <form action="#" method="POST" class="flex-grow-1 d-flex" onsubmit="return confirm('Apakah Anda yakin ingin menghapus karya ini?');">
+                    <form action="{{ route('karyamu.destroy', $karya->id) }}" method="POST" class="flex-grow-1 d-flex" onsubmit="return confirm('Apakah Anda yakin ingin menghapus karya ini?');">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-sm btn-outline-danger w-100 fw-bold" title="Hapus Karya">

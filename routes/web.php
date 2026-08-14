@@ -9,6 +9,7 @@ use App\Http\Controllers\KatalogController;
 use App\Http\Controllers\KeranjangController;
 use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\VerifikasiController;
+use App\Http\Controllers\KaryamuController;
 
 Route::get('/a', function () {
     return view('welcome', [
@@ -35,12 +36,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/keranjang', [KeranjangController::class, 'index'])->name('keranjang.index');
     Route::post('/keranjang', [KeranjangController::class, 'store'])->name('keranjang.store');
     Route::post('/checkout', [TransaksiController::class, 'store'])->name('checkout.store');
-    Route::get('/karyamu', function () {
-       return view('karyamu.index', [
-           
-            'karyas' => collect([]) 
-        ]);
-    })->name('karyamu.index');
+    Route::resource('karyamu', KaryamuController::class)->except(['show']);
 });
 
 // Rute Verifikasi Karya (Untuk Admin/Guru)
