@@ -1,47 +1,63 @@
-<x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+@extends('layouts.main')
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
+@section('content')
+<div class="row justify-content-center align-items-center w-100 m-0" style="min-height: 75vh;">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-sm" style="border: 1px solid var(--wisteria-blue); border-radius: 12px; overflow: hidden;">
+            <div class="card-header bg-primary-custom text-white text-center py-3 border-0">
+                <i class="bi bi-box-arrow-in-right fs-3"></i>
+                <h5 class="mb-0 fw-bold mt-1">Selamat Datang Kembali</h5>
+            </div>
+            <div class="card-body p-4 bg-white">
+                <!-- Session Status -->
+                @if (session('status'))
+                    <div class="alert alert-success small py-2">
+                        {{ session('status') }}
+                    </div>
+                @endif
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                <form method="POST" action="{{ route('login') }}">
+                    @csrf
+
+                    <!-- Email Address -->
+                    <div class="mb-3">
+                        <label for="email" class="form-label text-muted fw-bold small">Email</label>
+                        <input id="email" type="email" class="form-control border-custom @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autofocus autocomplete="username">
+                        @error('email')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-3">
+                        <label for="password" class="form-label text-muted fw-bold small">Password</label>
+                        <input id="password" type="password" class="form-control border-custom @error('password') is-invalid @enderror" name="password" required autocomplete="current-password">
+                        @error('password')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- Remember Me -->
+                    <div class="mb-3 form-check">
+                        <input id="remember_me" type="checkbox" class="form-check-input border-custom" name="remember">
+                        <label for="remember_me" class="form-check-label small text-muted">Ingat Saya</label>
+                    </div>
+
+                    <div class="d-flex flex-column gap-3 mt-4">
+                        <button type="submit" class="btn bg-accent fw-bold text-white shadow-sm w-100">
+                            Sign In
+                        </button>
+
+                       <div class="text-center small">
+                            <span class="text-muted">Belum punya akun?</span>
+                            <a class="text-decoration-none ms-1 fw-bold" style="color: var(--steel-blue);" href="{{ route('register') }}">
+                                Daftar di sini
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+    </div>
+</div>
+@endsection

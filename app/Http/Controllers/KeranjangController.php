@@ -9,20 +9,20 @@ class KeranjangController extends Controller
 {
     public function index()
     {
-        // Mengambil isi keranjang khusus untuk user yang sedang login
+        
         $keranjangs = Keranjang::where('user_id', Auth::id())->with('karya')->get();
         return view('keranjang.index', compact('keranjangs'));
     }
 
     public function store(Request $request)
     {
-        // Validasi input
+       
         $request->validate([
             'karya_id' => 'required|exists:karyas,id',
             'jumlah' => 'required|integer|min:1'
         ]);
 
-        // Masukkan ke database
+        
         Keranjang::create([
             'user_id' => Auth::id(),
             'karya_id' => $request->karya_id,
