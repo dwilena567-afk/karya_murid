@@ -31,4 +31,12 @@ class KeranjangController extends Controller
 
         return redirect()->back()->with('success', 'Karya berhasil ditambahkan ke keranjang!');
     }
+
+    public function destroy($id)
+    {
+        $keranjang = Keranjang::where('user_id', Auth::id())->findOrFail($id);
+        $keranjang->delete();
+
+        return redirect()->back()->with('success', 'Karya berhasil dihapus dari keranjang.');
+    }
 }

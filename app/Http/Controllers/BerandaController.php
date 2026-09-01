@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 
 class BerandaController extends Controller
 {
-    public function beranda()
+    public function index()
     {
         // Ambil 4 karya yang terverifikasi
         $karyasTerbaru = Karya::with('pembuat')

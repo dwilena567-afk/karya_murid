@@ -1,10 +1,15 @@
 @extends('layouts.main')
 
 @section('content')
+<div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold text-primary-custom m-0">Buat Karya</h4>
+    </div>
+
 <div class="container" style="max-width: 800px;">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold text-primary-custom m-0"><i class="bi bi-plus-circle me-2"></i>Tambah Karya Baru</h4>
-        <a href="{{ route('karyamu.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i> Kembali</a>
+    <div class="mb-4">
+        <a href="{{ route('karyamu.index') }}" class="btn btn-outline-secondary btn-sm">
+            &larr; Kembali 
+        </a>
     </div>
 
     <div class="card border-custom shadow-sm" style="border-radius: 10px;">
@@ -39,7 +44,10 @@
                     </div>
                     <div class="col-12">
                         <label class="form-label fw-bold">Gambar Karya</label>
-                        <input type="file" name="gambar" class="form-control border-custom" accept="image/*" required>
+                        <input type="file" name="gambar" class="form-control border-custom @error('gambar') is-invalid @enderror" accept="image/*" required>
+                        @error('gambar')
+                            <div class="alert alert-danger small py-2 mt-2 mb-0">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
                 <div class="mt-4 text-end">

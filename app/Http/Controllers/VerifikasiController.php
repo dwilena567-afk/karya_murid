@@ -2,33 +2,52 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Karya;
+use Illuminate\Http\Request;
 
 class VerifikasiController extends Controller
 {
-    // 1. Menampilkan daftar karya yang berstatus 'pending'
+    /**
+     * Menampilkan daftar karya yang masih berstatus 'pending'.
+     */
     public function index()
     {
-        $karyas = Karya::where('status_verifikasi', 'pending')->with('pembuat')->get();
+        // Mengambil karya yang statusnya pending, urut dari yang paling baru
+        $karyas = Karya::with(['pembuat', 'kategori'])
+            ->where('status_verifikasi', 'pending')
+            ->latest()
+            ->get();
+
         return view('verifikasi.index', compact('karyas'));
     }
 
-    // 2. Fungsi untuk menyetujui (Approve) karya
+    /**
+     * Menyetujui karya (Ubah status jadi 'approved').
+     */
     public function approve($id)
     {
         $karya = Karya::findOrFail($id);
-        $karya->update(['status_verifikasi' => 'approved']);
         
-        return redirect()->back()->with('success', 'Karya berhasil disetujui dan masuk ke Katalog!');
+        $karya->update([
+            'status_verifikasi' => 'approved'
+        ]);
+
+        return redirect()->route('verifikasi.index')
+            ->with('success', 'Karya "' . $karya->judul . '" berhasil disetujui dan kini tampil di katalog.');
     }
 
-    // 3. Fungsi untuk menolak (Reject) karya
+    /**
+     * Menolak karya (Ubah status jadi 'rejected').
+     */
     public function reject($id)
     {
         $karya = Karya::findOrFail($id);
-        $karya->update(['status_verifikasi' => 'rejected']);
         
-        return redirect()->back()->with('error', 'Karya ditolak.');
+        $karya->update([
+            'status_verifikasi' => 'rejected'
+        ]);
+
+        return redirect()->route('verifikasi.index')
+            ->with('success', 'Karya "' . $karya->judul . '" telah ditolak.');
     }
 }

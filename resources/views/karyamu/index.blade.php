@@ -25,14 +25,14 @@
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold text-primary-custom m-0">Kelola Karyamu</h4>
-    
-    <!-- Tombol Tambah Karya -->
-    <a href="{{ route('karyamu.create') }}" class="btn bg-accent fw-bold shadow-sm">
+ <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold text-primary-custom m-0">Karyamu</h4>
+        <a href="{{ route('karyamu.create') }}" class="btn bg-accent fw-bold shadow-sm">
         <i class="bi bi-plus-lg me-1"></i> Tambah Karya
     </a>
-</div>
+    </div>
+
+
 
 <!-- Grid Bootstrap seperti di Katalog -->
 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">

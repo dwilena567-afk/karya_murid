@@ -53,10 +53,14 @@
                         <div class="text-center text-md-end mt-3 mt-md-0 ms-md-auto w-100" style="min-width: 150px;">
                             <h5 class="fw-bold text-accent mb-3">Rp{{ number_format($subtotal, 0, ',', '.') }}</h5>
                             
-                            <!-- Tombol Hapus (Contoh statis, bisa dikembangkan nanti) -->
-                            <button class="btn btn-outline-danger btn-sm fw-bold w-100 w-md-auto" disabled title="Fitur hapus segera hadir">
-                                <i class="bi bi-trash"></i> Hapus
-                            </button>
+                            <!-- Tombol Hapus Terhubung dengan Controller -->
+                            <form action="{{ route('keranjang.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Hapus karya ini dari keranjang?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-outline-danger btn-sm fw-bold w-100 w-md-auto">
+                                    <i class="bi bi-trash"></i> Hapus
+                                </button>
+                            </form>
                         </div>
                         
                     </div>
@@ -82,10 +86,10 @@
                         <span class="fw-bold text-accent fs-5">Rp{{ number_format($totalHarga, 0, ',', '.') }}</span>
                     </div>
 
-                    <!-- Form Checkout -->
-                    <form action="{{ route('checkout.store') }}" method="POST">
+                    <!-- Form Checkout Terhubung dengan TransaksiController -->
+                    <form action="{{ route('transaksi.store') }}" method="POST">
                         @csrf
-                        <button type="submit" class="btn bg-accent w-100 fw-bold shadow-sm py-2">
+                        <button type="submit" class="btn bg-accent w-100 fw-bold shadow-sm py-2" style="background-color: #ff9800; color: white; border: none;">
                             Lanjut ke Pembayaran <i class="bi bi-arrow-right ms-1"></i>
                         </button>
                     </form>

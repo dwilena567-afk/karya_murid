@@ -51,16 +51,19 @@ class KatalogController extends Controller
         return view('katalog.index', compact('karyas'));
     }
 
+   
+
     public function show($id)
-    {
-        
-        $karya = Karya::with('pembuat')->findOrFail($id);
-        
-       
-        if ($karya->status_verifikasi !== 'approved') {
+{
+    // Mengambil data karya berdasarkan ID, beserta relasi kategorinya
+    $karya = Karya::with('kategori')->findOrFail($id);
+
+    if ($karya->status_verifikasi !== 'approved') {
             abort(404, 'Karya tidak ditemukan atau belum disetujui.');
         }
 
-        return view('katalog.show', compact('karya'));
-    }
+    return view('katalog.show', compact('karya'));
+    
+    
+}
 }

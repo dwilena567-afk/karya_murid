@@ -21,18 +21,22 @@
         }
 
         /* Penerapan Tema Global dengan Font Verdana */
-        html, body {
+        html,
+        body {
             background-color: var(--alice-blue);
             color: #333;
             font-family: Verdana, Geneva, Tahoma, sans-serif;
             overflow-y: auto;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE 10+ */
+            scrollbar-width: none;
+            /* Firefox */
+            -ms-overflow-style: none;
+            /* IE 10+ */
         }
 
         html::-webkit-scrollbar,
         body::-webkit-scrollbar {
-            display: none; /* Chrome, Safari, Opera */
+            display: none;
+            /* Chrome, Safari, Opera */
         }
 
         .bg-primary-custom {
@@ -79,8 +83,6 @@
             border-right: 1px solid var(--wisteria-blue);
             width: 260px;
         }
-
-        
     </style>
 </head>
 
@@ -93,8 +95,16 @@
                     class="bi bi-house-door me-1"></i>Beranda</a>
             <a href="{{ route('katalog.index') }}" class="nav-link-custom"><i class="bi bi-grid me-1"></i>Katalog</a>
             @auth
-                <a href="{{ route('keranjang.index') }}" class="nav-link-custom"><i class="bi bi-cart3 me-1"></i>Keranjang</a>
+                <a href="{{ route('keranjang.index') }}" class="nav-link-custom"><i
+                        class="bi bi-cart3 me-1"></i>Keranjang</a>
                 <a href="{{ route('karyamu.index') }}" class="nav-link-custom"><i class="bi bi-palette me-1"></i>Karyamu</a>
+                <a href="{{ route('dashboard.index') }}" class="nav-link-custom"><i
+                        class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+                @if(auth()->user()->role === 'admin')
+                    <a href="{{ route('verifikasi.index') }}" class="nav-link-custom">
+                        <i class="bi bi-shield-check me-1"></i>Verifikasi
+                    </a>
+                @endif
             @endauth
         </div>
         <div>
@@ -119,7 +129,7 @@
     <div class="container-fluid flex-grow-1 p-0 d-flex">
 
         <!-- Sidebar Filter -->
-        @if(!request()->routeIs('beranda*') && !request()->routeIs('login') && !request()->routeIs('register') && !request()->routeIs('password.*') && !request()->routeIs('verification.*') && !request()->routeIs('keranjang.index') &&  !request()->routeIs('karyamu.*'))
+        @if(request()->routeIs('katalog.index'))
 
             <aside class="sidebar-panel p-4 d-none d-md-block shadow-sm">
                 <h6 class="fw-bold text-primary-custom mb-2"><i class="bi bi-search me-1"></i> Cari</h6>
@@ -162,14 +172,7 @@
                         <input type="number" name="max_harga" class="form-control form-control-sm border-custom"
                             placeholder="Max Rp" value="{{ request('max_harga') }}">
                     </div>
-                    <div>
-                        <label class="form-label text-muted fw-bold mb-1" style="font-size: 0.75rem;">Urutkan</label>
-                        <select name="sort" class="form-select form-select-sm border-custom">
-                            <option value="terbaru" {{ request('sort') == 'terbaru' ? 'selected' : '' }}>Terbaru</option>
-                            <option value="termurah" {{ request('sort') == 'termurah' ? 'selected' : '' }}>Termurah</option>
-                            <option value="termahal" {{ request('sort') == 'termahal' ? 'selected' : '' }}>Termahal</option>
-                        </select>
-                    </div>
+
 
                     <div class="d-flex flex-column gap-2 mt-2">
                         <button type="submit" class="btn bg-primary-custom text-white btn-sm fw-bold">Terapkan

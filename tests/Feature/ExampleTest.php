@@ -16,4 +16,17 @@ class ExampleTest extends TestCase
 
         $response->assertStatus(200);
     }
+
+    public function test_dashboard_does_not_render_sidebar(): void
+    {
+        $user = \App\Models\User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->get('/dashboard');
+
+        $response->assertOk();
+        $response->assertDontSee('Cari');
+        $response->assertDontSee('Filter');
+    }
 }

@@ -57,6 +57,10 @@ class KaryamuController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->hasFile('gambar') && $request->file('gambar')->getSize() > 2 * 1024 * 1024) {
+            return back()->withInput()->with('error', 'Ukuran gambar maksimal 2 MB. Silakan pilih gambar yang lebih kecil.');
+        }
+
         $request->validate([
             'judul' => 'required|string|max:255',
             'deskripsi' => 'required|string',
@@ -93,6 +97,10 @@ class KaryamuController extends Controller
     public function update(Request $request, $id)
     {
         $karya = Karya::where('user_id', Auth::id())->findOrFail($id);
+
+        if ($request->hasFile('gambar') && $request->file('gambar')->getSize() > 2 * 1024 * 1024) {
+            return back()->withInput()->with('error', 'Ukuran gambar maksimal 2 MB. Silakan pilih gambar yang lebih kecil.');
+        }
 
         $request->validate([
             'judul' => 'required|string|max:255',
