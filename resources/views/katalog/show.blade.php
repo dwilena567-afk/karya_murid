@@ -30,7 +30,8 @@
                     
                     <h1 class="fw-bold mb-3">{{ $karya->judul }}</h1>
                     
-                    <h3 class="text-success fw-bold mb-4">
+                    <h3 class="text-accent fw-bold mb-4">
+                        
                         Rp {{ number_format($karya->harga, 0, ',', '.') }}
                     </h3>
 
@@ -42,9 +43,15 @@
                     </div>
 
                     <div class="mb-4">
+                        @if($karya->stok > 0)
                         <span class="text-secondary small">
                             Stok Tersedia: <strong class="text-dark">{{ $karya->stok }}</strong>
                         </span>
+                        @elseif($karya->stok <= 0)
+                        <span class="text-danger small">
+                            Stok Habis
+                        </span>
+                        @endif
                     </div>
 
                     <hr class="my-4 text-muted opacity-25">
@@ -54,7 +61,9 @@
                         @csrf
                         <input type="hidden" name="karya_id" value="{{ $karya->id }}">
                         
+                        
                         <div class="d-flex align-items-center gap-3">
+                             @if($karya->stok > 0)
                             <div style="width: 100px;">
                                 <input type="number" 
                                        name="jumlah" 
@@ -67,6 +76,11 @@
                             <button type="submit" class="btn btn-primary px-4 py-2 fw-semibold">
                                 + Tambah ke Keranjang
                             </button>
+                            @else
+                            <button type="button" class="btn btn-secondary px-4 py-2 fw-semibold" disabled>
+                                Stok Habis
+                            </button>
+                            @endif
                         </div>
                     </form>
                 </div>

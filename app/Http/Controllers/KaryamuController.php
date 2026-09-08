@@ -13,9 +13,10 @@ class KaryamuController extends Controller
 {
     public function index(Request $request)
     {
-        
+        // Daftar karya selalu dibatasi ke pemilik yang sedang login.
         $query = Karya::with('kategori')->where('user_id', Auth::id());
 
+        // Filter opsional dapat digabungkan untuk memudahkan pemilik mencari karya tertentu.
         if ($request->filled('search')) {
             $query->where('judul', 'like', '%' . $request->search . '%');
         }
@@ -32,6 +33,7 @@ class KaryamuController extends Controller
             $query->where('harga', '<=', $request->max_harga);
         }
 
+        // Terbaru menjadi urutan default agar perubahan terakhir terlihat lebih dahulu.
         if ($request->filled('sort')){
             if ($request->sort == 'termurah'){
                 $query->orderBy('harga', 'asc');
@@ -57,6 +59,7 @@ class KaryamuController extends Controller
 
     public function store(Request $request)
     {
+        // Pemeriksaan ukuran dilakukan sebelum validasi file untuk memberi pesan yang lebih jelas.
         if ($request->hasFile('gambar') && $request->file('gambar')->getSize() > 2 * 1024 * 1024) {
             return back()->withInput()->with('error', 'Ukuran gambar maksimal 2 MB. Silakan pilih gambar yang lebih kecil.');
         }
@@ -70,8 +73,10 @@ class KaryamuController extends Controller
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
+        // File disimpan di disk public agar dapat ditampilkan melalui storage symlink.
         $gambarPath = $request->file('gambar')->store('karya_images', 'public');
 
+        // Karya baru wajib diverifikasi admin sebelum tampil di katalog publik.
         Karya::create([
             'user_id' => Auth::id(),
             'judul' => $request->judul,
@@ -89,6 +94,7 @@ class KaryamuController extends Controller
 
     public function edit($id)
     {
+        // findOrFail setelah filter user_id mencegah pengeditan karya milik pengguna lain.
         $karya = Karya::where('user_id', Auth::id())->findOrFail($id);
         $kategoris = Kategori::all();
         return view('karyamu.edit', compact('karya', 'kategoris'));
@@ -96,6 +102,7 @@ class KaryamuController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Batas kepemilikan diterapkan lagi pada update, bukan hanya pada halaman edit.
         $karya = Karya::where('user_id', Auth::id())->findOrFail($id);
 
         if ($request->hasFile('gambar') && $request->file('gambar')->getSize() > 2 * 1024 * 1024) {
@@ -111,6 +118,7 @@ class KaryamuController extends Controller
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
+        // Setiap perubahan mengulang proses verifikasi agar data yang berubah ditinjau kembali.
         $data = [
             'judul' => $request->judul,
             'deskripsi' => $request->deskripsi,
@@ -121,7 +129,7 @@ class KaryamuController extends Controller
         ];
 
         if ($request->hasFile('gambar')) {
-            
+            // Hapus file lama setelah file baru tersedia agar gambar sebelumnya tidak menumpuk.
             if ($karya->gambar) {
                 Storage::disk('public')->delete($karya->gambar);
             }
@@ -137,9 +145,10 @@ class KaryamuController extends Controller
 
     public function destroy($id)
     {
+        // Cari berdasarkan user_id agar endpoint hapus tidak dapat dipakai lintas akun.
         $karya = Karya::where('user_id', Auth::id())->findOrFail($id);
 
-        // Hapus gambar dari storage jika ada
+        // Hapus file fisik sebelum record database agar tidak meninggalkan file yatim.
         if ($karya->gambar) {
             Storage::disk('public')->delete($karya->gambar);
         }

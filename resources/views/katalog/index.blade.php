@@ -56,7 +56,11 @@
                             <div
                                 class="mt-auto pt-2 border-top border-custom d-flex justify-content-between align-items-center">
                                 <span class="fw-bold text-accent fs-6">Rp{{ number_format($karya->harga, 0, ',', '.') }}</span>
+                                @if ($karya->stok > 0)
                                 <small class="text-muted" style="font-size: 0.75rem;">Stok: {{ $karya->stok }}</small>
+                                @else
+                                <small class="text-danger" style="font-size: 0.75rem;">Stok Habis</small>
+                                @endif
                             </div>
                         </div>
                     </a>

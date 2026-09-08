@@ -8,20 +8,18 @@ class KatalogController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. Mulai query, hanya ambil karya yang sudah disetujui (approved)
+        // Karya pending/rejected tidak boleh muncul di katalog publik.
         $query = Karya::with(['pembuat', 'kategori'])->where('status_verifikasi', 'approved');
 
-        // 2. Filter Pencarian Judul
+        // Filter diterapkan bertahap agar kombinasi pencarian, kategori, dan harga dapat digunakan.
         if ($request->filled('search')) {
             $query->where('judul', 'like', '%' . $request->search . '%');
         }
 
-        // 3. Filter Kategori
         if ($request->filled('kategori')) {
             $query->where('kategori_id', $request->kategori);
         }
 
-        // 4. Filter Rentang Harga (Min dan Max)
         if ($request->filled('min_harga')) {
             $query->where('harga', '>=', $request->min_harga);
         }
@@ -29,7 +27,7 @@ class KatalogController extends Controller
             $query->where('harga', '<=', $request->max_harga);
         }
 
-        // 5. Logika Pengurutan (Sort)
+        // Urutan default terbaru; pilihan pengguna hanya mengubah kolom harga.
         if ($request->filled('sort')) {
             if ($request->sort == 'termurah') {
                 $query->orderBy('harga', 'asc');
@@ -44,10 +42,8 @@ class KatalogController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
-        // 6. Eksekusi query dan ambil datanya
         $karyas = $query->get();
 
-        // 7. Kirim data ke tampilan (view) blade
         return view('katalog.index', compact('karyas'));
     }
 
@@ -55,9 +51,10 @@ class KatalogController extends Controller
 
     public function show($id)
 {
-    // Mengambil data karya berdasarkan ID, beserta relasi kategorinya
+    // Relasi kategori diperlukan untuk detail tampilan; ID yang tidak ada menghasilkan 404.
     $karya = Karya::with('kategori')->findOrFail($id);
 
+    // Validasi ulang status mencegah karya yang belum disetujui diakses melalui URL langsung.
     if ($karya->status_verifikasi !== 'approved') {
             abort(404, 'Karya tidak ditemukan atau belum disetujui.');
         }

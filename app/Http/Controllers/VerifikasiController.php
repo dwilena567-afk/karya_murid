@@ -12,7 +12,7 @@ class VerifikasiController extends Controller
      */
     public function index()
     {
-        // Mengambil karya yang statusnya pending, urut dari yang paling baru
+        // Admin hanya perlu melihat karya yang menunggu keputusan, dengan item terbaru di atas.
         $karyas = Karya::with(['pembuat', 'kategori'])
             ->where('status_verifikasi', 'pending')
             ->latest()
@@ -27,7 +27,8 @@ class VerifikasiController extends Controller
     public function approve($id)
     {
         $karya = Karya::findOrFail($id);
-        
+
+        // Status approved membuat karya tampil di katalog dan beranda publik.
         $karya->update([
             'status_verifikasi' => 'approved'
         ]);
@@ -42,7 +43,8 @@ class VerifikasiController extends Controller
     public function reject($id)
     {
         $karya = Karya::findOrFail($id);
-        
+
+        // Status rejected menyimpan keputusan admin tanpa menghapus data karya.
         $karya->update([
             'status_verifikasi' => 'rejected'
         ]);

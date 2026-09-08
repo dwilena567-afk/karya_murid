@@ -16,5 +16,10 @@ class Karya extends Model
         return $this->belongsTo(Kategori::class, 'kategori_id');
     }
 
+    public function transaksiDetails()
+{
+    return $this->hasMany(TransaksiDetail::class, 'karya_id');
+}
+
 
 }

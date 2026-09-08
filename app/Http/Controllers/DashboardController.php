@@ -11,27 +11,33 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    /**
+     * Menyediakan kartu ringkasan dan tren tujuh hari untuk karya milik pengguna.
+     * Hanya transaksi settlement/capture yang sudah berhasil masuk perhitungan.
+     */
     public function index()
     {
         $user = Auth::user();
 
-        // 1. Kartu Ringkasan (Summary Cards)
+        // Semua metrik dibatasi pada karya milik pengguna yang sedang login.
         $totalKarya = Karya::where('user_id', $user->id)->count();
+
+        // Detail hanya dihitung setelah pembayaran berhasil agar checkout pending
+        // atau pembayaran gagal tidak dianggap sebagai penjualan.
         $totalTerjual = TransaksiDetail::whereHas('karya', function ($q) use ($user) {
             $q->where('user_id', $user->id);
         })->whereHas('transaksi', function ($q) {
-            $q->where('transaction_status', 'settlement') // Hanya transaksi sukses (dari Midtrans)
-                ->orWhere('transaction_status', 'capture');
+            $q->whereIn('transaction_status', ['settlement', 'capture']);
         })->sum('jumlah');
 
         $totalPendapatan = TransaksiDetail::whereHas('karya', function ($q) use ($user) {
             $q->where('user_id', $user->id);
         })->whereHas('transaksi', function ($q) {
-            $q->where('transaction_status', 'settlement')
-                ->orWhere('transaction_status', 'capture');
-        })->sum(\DB::raw('harga_satuan * jumlah')); // Pastikan subtotal dihitung: harga_satuan * jumlah
+            $q->whereIn('transaction_status', ['settlement', 'capture']);
+        })->sum(DB::raw('harga_satuan * jumlah'));
 
-        // 2. Data Grafik Penjualan (7 Hari Terakhir)
+        // Grafik memakai tanggal detail transaksi, bukan tanggal pembayaran,
+        // sehingga setiap baris produk masuk ke hari penjualan yang tepat.
         $penjualanHarian = TransaksiDetail::select(
             DB::raw('DATE(transaksi_details.created_at) as tanggal'),
             DB::raw('SUM(transaksi_details.jumlah) as total_item'),
@@ -41,15 +47,14 @@ class DashboardController extends Controller
             ->join('transaksis', 'transaksi_details.transaksi_id', '=', 'transaksis.id')
             ->where('karyas.user_id', $user->id)
             ->where(function ($q) {
-                $q->where('transaksis.transaction_status', 'settlement')
-                    ->orWhere('transaksis.transaction_status', 'capture');
+                $q->whereIn('transaksis.transaction_status', ['settlement', 'capture']);
             })
             ->where('transaksi_details.created_at', '>=', now()->subDays(7))
             ->groupBy('tanggal')
             ->orderBy('tanggal', 'asc')
             ->get();
 
-        // Format data untuk Chart.js (Label: Tanggal, Data: Pendapatan)
+        // Chart.js membutuhkan dua array terpisah: label tanggal dan nilai pendapatan.
         $chartLabels = $penjualanHarian->pluck('tanggal')->toArray();
         $chartData = $penjualanHarian->pluck('pendapatan')->toArray();
 
@@ -60,5 +65,6 @@ class DashboardController extends Controller
             'chartLabels',
             'chartData'
         ));
+
     }
 }

@@ -63,10 +63,39 @@
         <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
 
         <div class="text-center mt-4">
-            <button type="button" class="btn bg-primary-custom text-white btn-lg fw-bold px-4" onclick="snap.pay('{{ $transaksi->snap_token }}')">
+            <button type="button" class="btn bg-primary-custom text-white btn-lg fw-bold px-4" onclick="bayarTransaksi()">
                 <i class="bi bi-credit-card me-2"></i> Bayar Sekarang
             </button>
         </div>
+        <script>
+            function bayarTransaksi() {
+                snap.pay('{{ $transaksi->snap_token }}', {
+                    onSuccess: function () {
+                        fetch('{{ route('transaksi.confirm-payment', $transaksi->id) }}', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json'
+                            }
+                        })
+                        .then(function (response) {
+                            if (!response.ok) {
+                                throw new Error('Konfirmasi pembayaran gagal.');
+                            }
+                            return response.json();
+                        })
+                        .then(function (payment) {
+                            if (payment.successful) {
+                                window.location.href = '{{ route('keranjang.index') }}';
+                            }
+                        })
+                        .catch(function (error) {
+                            alert(error.message);
+                        });
+                    }
+                });
+            }
+        </script>
     @else
         <div class="alert alert-warning mt-4 mb-0">
             Token pembayaran belum tersedia untuk transaksi ini.

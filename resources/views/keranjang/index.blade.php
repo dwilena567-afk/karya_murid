@@ -90,14 +90,11 @@
                     <form action="{{ route('transaksi.store') }}" method="POST">
                         @csrf
                         <button type="submit" class="btn bg-accent w-100 fw-bold shadow-sm py-2" style="background-color: #ff9800; color: white; border: none;">
-                            Lanjut ke Pembayaran <i class="bi bi-arrow-right ms-1"></i>
+                            Checkout <i class="bi bi-arrow-right ms-1"></i>
                         </button>
                     </form>
                     
-                    <div class="text-center mt-3 text-muted" style="font-size: 0.75rem;">
-                        <i class="bi bi-shield-check me-1" style="color: var(--steel-azure);"></i> 
-                        Transaksi Anda aman dan terenkripsi.
-                    </div>
+                    
                 </div>
             </div>
         </div>

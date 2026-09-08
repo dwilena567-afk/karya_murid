@@ -1,59 +1,84 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Karya Murid
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi katalog dan penjualan karya murid berbasis Laravel. Pengguna dapat mengelola karya, memasukkan produk ke keranjang, melakukan pembayaran melalui Midtrans Snap, dan melihat ringkasan penjualan pada dashboard.
 
-## About Laravel
+## Persyaratan
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.2 atau lebih baru
+- Composer
+- Node.js dan npm
+- MySQL atau database yang didukung Laravel
+- Akun Midtrans Sandbox untuk pengujian pembayaran
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Menjalankan Aplikasi
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. Install dependensi PHP dan JavaScript:
 
-## Learning Laravel
+   ```bash
+   composer install
+   npm install
+   ```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+2. Siapkan konfigurasi lingkungan:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+   ```bash
+   copy .env.example .env
+   php artisan key:generate
+   ```
 
-## Laravel Sponsors
+3. Isi koneksi database pada `.env`, lalu jalankan migrasi:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+   ```bash
+   php artisan migrate
+   ```
 
-### Premium Partners
+4. Konfigurasi kunci Midtrans pada `.env`:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+   ```dotenv
+   MIDTRANS_SERVER_KEY=...
+   MIDTRANS_CLIENT_KEY=...
+   MIDTRANS_IS_PRODUCTION=false
+   ```
 
-## Contributing
+5. Jalankan server Laravel dan Vite pada terminal terpisah:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+   ```bash
+   php artisan serve
+   npm run dev
+   ```
 
-## Code of Conduct
+## Alur Pembayaran
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+1. Checkout membuat transaksi berstatus `pending`, menyimpan detail produk, mengosongkan keranjang, lalu meminta Snap Token dari Midtrans.
+2. Halaman detail transaksi membuka Midtrans Snap. Setelah pembayaran sukses, browser memanggil endpoint konfirmasi pembayaran.
+3. Endpoint konfirmasi meminta status order langsung ke Midtrans. Ini memungkinkan aplikasi lokal memperbarui transaksi meskipun webhook Midtrans tidak dapat mengakses `localhost`.
+4. Midtrans juga mengirim notifikasi ke `POST /midtrans/callback`. Webhook dan endpoint konfirmasi menggunakan logika sinkronisasi yang sama.
+5. Untuk status `settlement` atau `capture` yang valid, stok dikurangi satu kali dan status transaksi disimpan.
 
-## Security Vulnerabilities
+Pemrosesan dibuat idempoten: notifikasi atau konfirmasi yang sama dapat diterima berulang tanpa mengurangi stok dua kali. Pada server yang dapat diakses Midtrans, arahkan URL notifikasi pembayaran Midtrans ke URL publik aplikasi dengan path `/midtrans/callback`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Dashboard
 
-## License
+Dashboard mengambil data dari `transaksi_details` dan hanya menghitung transaksi berstatus `settlement` atau `capture`:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- **Karya terjual**: total `jumlah` detail transaksi milik karya pengguna.
+- **Total pendapatan**: `harga_satuan * jumlah` dari detail transaksi tersebut.
+- **Tren penjualan**: pendapatan yang dikelompokkan berdasarkan tanggal detail transaksi dalam tujuh hari terakhir.
+
+## Struktur Fitur Utama
+
+- `app/Http/Controllers/TransaksiController.php`: checkout, detail transaksi, webhook, dan konfirmasi status pembayaran.
+- `app/Http/Controllers/DashboardController.php`: ringkasan dan tren penjualan pemilik karya.
+- `resources/views/transaksi/show.blade.php`: tombol Midtrans Snap dan konfirmasi pembayaran dari browser.
+- `routes/web.php`: route katalog, keranjang, transaksi, callback Midtrans, dan dashboard.
+- `database/migrations/`: struktur tabel pengguna, karya, keranjang, transaksi, dan detail transaksi.
+
+## Pengujian
+
+Jalankan test suite dengan:
+
+```bash
+php artisan test
+```
+
+Pastikan database testing sudah dikonfigurasi dan migrasi dijalankan oleh environment test.
