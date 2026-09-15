@@ -15,10 +15,17 @@
                 <!-- Kolom Gambar -->
                 <div class="col-md-6">
                     <div class="bg-light rounded-3 overflow-hidden text-center p-2">
-                        <img src="{{ asset('storage/' . $karya->gambar) }}" 
-                             alt="{{ $karya->judul }}" 
-                             class="img-fluid rounded-3 object-fit-cover w-100" 
-                             style="max-height: 450px;">
+                        @if($karya->gambar)
+                            <img src="{{ asset('storage/' . $karya->gambar) }}" 
+                                 alt="{{ $karya->judul }}" 
+                                 class="img-fluid rounded-3 object-fit-cover w-100" 
+                                 style="max-height: 450px;">
+                        @else
+                            <img src="https://via.placeholder.com/450x450?text=Tidak+ada+gambar" 
+                                 alt="Placeholder" 
+                                 class="img-fluid rounded-3 object-fit-cover w-100" 
+                                 style="max-height: 450px;">
+                        @endif
                     </div>
                 </div>
 

@@ -69,7 +69,11 @@
                 
                 <div class="mt-auto pt-2 border-top border-custom d-flex justify-content-between align-items-center mb-3">
                     <span class="fw-bold text-accent fs-6">Rp{{ number_format($karya->harga, 0, ',', '.') }}</span>
+                     @if ($karya->stok > 0)
                     <small class="text-muted" style="font-size: 0.75rem;">Stok: {{ $karya->stok }}</small>
+                    @else
+                    <small class="text-danger" style="font-size: 0.75rem;">Stok Habis</small>
+                    @endif
                 </div>
 
                 <!-- Tombol Aksi (Edit & Hapus) -->
@@ -88,6 +92,7 @@
             </div>
         </div>
     </div>
+    
     @empty
     <!-- Tampilan Jika Data Kosong -->
     <div class="col-12 text-center py-5">
@@ -96,6 +101,12 @@
         
     </div>
     @endforelse
+
+    
     
 </div>
+
+<div class="mt-4 d-flex justify-content-center">
+        {{ $karyas->links() }}
+    </div>
 @endsection

@@ -84,6 +84,35 @@
             border-right: 1px solid var(--wisteria-blue);
             width: 260px;
         }
+
+        /* Mengubah warna teks dan border tombol pagination */
+        .pagination .page-link {
+            color: var(--steel-azure);
+            border-color: var(--wisteria-blue);
+        }
+
+        /* Mengubah warna saat tombol di-hover */
+        .pagination .page-link:hover {
+            background-color: var(--alice-blue);
+            color: var(--steel-azure);
+        }
+
+        /* Mengubah warna tombol halaman yang sedang aktif */
+        .pagination .page-item.active .page-link {
+            background-color: var(--steel-azure);
+            border-color: var(--steel-azure);
+            color: white;
+        }
+
+        /* Mengubah warna tombol yang tidak bisa diklik (disabled) */
+        .pagination .page-item.disabled .page-link {
+            color: #6c757d;
+            background-color: #e9ecef;
+        }
+
+        .pagination {
+            margin-left: 1.5rem !important;
+        }
     </style>
 </head>
 
@@ -119,8 +148,13 @@
                     </form>
                 </div>
             @else
-                <a href="{{ route('login') }}" class="btn bg-accent btn-sm py-1 px-3 fw-bold" style="font-size: 0.8rem;">
+                
+                <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm py-1 px-3 fw-bold" style="font-size: 0.8rem;">
                     Sign In <i class="bi bi-box-arrow-in-right ms-1"></i>
+                </a>
+
+                <a href="{{ route('register') }}" class="btn bg-accent btn-sm py-1 px-3 fw-bold" style="font-size: 0.8rem;">
+                    Sign Up <i class="bi bi-person-plus ms-1"></i> 
                 </a>
             @endauth
         </div>
@@ -133,24 +167,23 @@
         @if(request()->routeIs('katalog.index'))
 
             <aside class="sidebar-panel p-4 d-none d-md-block shadow-sm">
-                <h6 class="fw-bold text-primary-custom mb-2"><i class="bi bi-search me-1"></i> Cari</h6>
-                <form action="{{ request()->url() }}" method="GET" class="mb-4">
-                    <div class="input-group input-group-sm">
-                        <input type="text" name="search" class="form-control border-custom" placeholder="Nama produk..."
-                            value="{{ request('search') }}">
-                        <button class="btn btn-outline-secondary border-custom" type="submit"
-                            style="color: var(--steel-blue);"><i class="bi bi-search"></i></button>
-                    </div>
-                </form>
-
                 <h6 class="fw-bold text-primary-custom mb-3 border-bottom border-custom pb-2"><i
-                        class="bi bi-funnel me-1"></i> Filter</h6>
+                        class="bi bi-search me-1"></i> Cari & Filter</h6>
+                <!-- Consolidated Form: Combines search, category, price, and sort -->
                 <form action="{{ request()->url() }}" method="GET" class="d-flex flex-column gap-3 small">
 
-                    @if(request('search'))
-                        <input type="hidden" name="search" value="{{ request('search') }}">
-                    @endif
+                    <!-- Search Input -->
+                    <div>
+                        <label class="form-label text-muted fw-bold mb-1" style="font-size: 0.75rem;">Cari Produk</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" name="search" class="form-control border-custom" placeholder="Nama produk..."
+                                value="{{ request('search') }}">
+                            <button class="btn btn-outline-secondary border-custom" type="submit"
+                                style="color: var(--steel-blue);"><i class="bi bi-search"></i></button>
+                        </div>
+                    </div>
 
+                    <!-- Category Filter -->
                     <div>
                         <label class="form-label text-muted fw-bold mb-1" style="font-size: 0.75rem;">Kategori</label>
                         <select name="kategori" id="kategori_id" class="form-select form-select-sm border-custom">
@@ -166,6 +199,8 @@
 
                         </select>
                     </div>
+
+                    <!-- Price Range Filter -->
                     <div>
                         <label class="form-label text-muted fw-bold mb-1" style="font-size: 0.75rem;">Rentang Harga</label>
                         <input type="number" name="min_harga" class="form-control form-control-sm border-custom mb-2"
@@ -174,7 +209,18 @@
                             placeholder="Max Rp" value="{{ request('max_harga') }}">
                     </div>
 
+                    <!-- Sort Dropdown -->
+                    <div>
+                        <label class="form-label text-muted fw-bold mb-1" style="font-size: 0.75rem;">Urutkan
+                            Berdasarkan</label>
+                        <select name="sort" class="form-select form-select-sm border-custom">
+                            <option value="terbaru" {{ request('sort') == 'terbaru' ? 'selected' : '' }}>Terbaru</option>
+                            <option value="termurah" {{ request('sort') == 'termurah' ? 'selected' : '' }}>Termurah</option>
+                            <option value="termahal" {{ request('sort') == 'termahal' ? 'selected' : '' }}>Termahal</option>
+                        </select>
+                    </div>
 
+                    <!-- Action Buttons -->
                     <div class="d-flex flex-column gap-2 mt-2">
                         <button type="submit" class="btn bg-primary-custom text-white btn-sm fw-bold">Terapkan
                             Filter</button>

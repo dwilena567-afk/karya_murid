@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use App\Models\Kategori;
 use Illuminate\Support\Facades\View;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,6 +32,8 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.main', function ($view) {
             $view->with('kategoris', Kategori::all());
         });
+
+        Paginator::useBootstrapFive();
     }
 
     

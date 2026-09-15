@@ -60,7 +60,7 @@
     </div>
 
     @if($transaksi->snap_token)
-        <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
+        <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
 
         <div class="text-center mt-4">
             <button type="button" class="btn bg-primary-custom text-white btn-lg fw-bold px-4" onclick="bayarTransaksi()">
@@ -70,7 +70,7 @@
         <script>
             function bayarTransaksi() {
                 snap.pay('{{ $transaksi->snap_token }}', {
-                    onSuccess: function () {
+                    onSuccess: function (result) {
                         fetch('{{ route('transaksi.confirm-payment', $transaksi->id) }}', {
                             method: 'POST',
                             headers: {
@@ -86,12 +86,22 @@
                         })
                         .then(function (payment) {
                             if (payment.successful) {
-                                window.location.href = '{{ route('keranjang.index') }}';
+                                alert('Pembayaran berhasil! Terima kasih atas transaksi Anda.');
+                                window.location.href = '{{ route('dashboard.index') }}';
                             }
                         })
                         .catch(function (error) {
-                            alert(error.message);
+                            alert('Error: ' + error.message);
                         });
+                    },
+                    onPending: function (result) {
+                        alert('Pembayaran Anda sedang diproses. Harap tunggu notifikasi dari sistem.');
+                    },
+                    onError: function (result) {
+                        alert('Pembayaran gagal: ' + result.status_message + '. Silakan coba lagi atau hubungi support.');
+                    },
+                    onClose: function () {
+                        alert('Anda menutup popup pembayaran. Transaksi tidak diselesaikan.');
                     }
                 });
             }

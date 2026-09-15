@@ -31,10 +31,12 @@ class KeranjangController extends Controller
         return redirect()->back()->with('success', 'Karya berhasil ditambahkan ke keranjang!');
     }
 
-    public function destroy($id)
+    public function destroy(Keranjang $keranjang)
     {
         // Pembatasan user_id memastikan pengguna hanya dapat menghapus item keranjangnya sendiri.
-        $keranjang = Keranjang::where('user_id', Auth::id())->findOrFail($id);
+        if ($keranjang->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized');
+        }
         $keranjang->delete();
 
         return redirect()->back()->with('success', 'Karya berhasil dihapus dari keranjang.');

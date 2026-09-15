@@ -72,7 +72,7 @@ class TransaksiController extends Controller
             // Jangan expose transaksi sebelum token dan seluruh data lokal berhasil disimpan.
             DB::commit();
 
-            return redirect()->route('transaksi.show', $transaksi->id)->with('success', 'Berhasil checkout! Silakan selesaikan pembayaran.');
+            return redirect()->route('transaksi.show', $transaksi)->with('success', 'Berhasil checkout! Silakan selesaikan pembayaran.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -81,9 +81,13 @@ class TransaksiController extends Controller
     }
 
     /** Menampilkan ringkasan transaksi dan tombol pembayaran untuk pemiliknya. */
-    public function show($id)
+    public function show(Transaksi $transaksi)
     {
-        $transaksi = Transaksi::with(['details.karya'])->where('user_id', Auth::id())->findOrFail($id);
+        // Model binding + auth check memastikan hanya pemilik transaksi yang dapat melihatnya.
+        if ($transaksi->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized');
+        }
+        $transaksi->load(['details.karya']);
         
         return view('transaksi.show', compact('transaksi'));
     }
@@ -123,9 +127,12 @@ class TransaksiController extends Controller
      * Mengambil status order langsung dari Midtrans setelah Snap sukses di browser.
      * Jalur ini penting saat aplikasi masih lokal dan webhook tidak dapat menjangkaunya.
      */
-    public function confirmPayment($id)
+    public function confirmPayment(Transaksi $transaksi)
     {
-        $transaksi = Transaksi::where('user_id', Auth::id())->findOrFail($id);
+        // Model binding + auth check memastikan hanya pemilik transaksi yang dapat mengkonfirmasi.
+        if ($transaksi->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized');
+        }
 
         $this->configureMidtrans();
         $status = \Midtrans\Transaction::status($transaksi->order_id);

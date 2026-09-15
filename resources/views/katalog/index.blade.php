@@ -43,7 +43,7 @@
                                 class="w-100 object-fit-cover" style="height: 200px;" alt="{{ $karya->judul }}">
                             <!-- Lencana Kategori Mengambang -->
                             <span class="badge badge-category position-absolute top-0 end-0 m-2 px-2 py-1">
-                                {{ ucfirst($karya->kategori->nama ?? 'Umum') }}
+                                {{ ucfirst($karya->kategori?->nama ?? 'Umum') }}
                             </span>
                         </div>
 
@@ -51,7 +51,7 @@
                         <div class="p-3 d-flex flex-column flex-grow-1">
                             <h6 class="fw-bold text-primary-custom mb-1" style="line-height: 1.3;">{{ $karya->judul }}</h6>
                             <small class="text-muted mb-3"><i class="bi bi-person-fill me-1"
-                                    style="color: var(--steel-blue);"></i> {{ $karya->pembuat->name ?? 'Siswa' }}</small>
+                                    style="color: var(--steel-blue);"></i> {{ $karya->pembuat?->name ?? 'Siswa' }}</small>
 
                             <div
                                 class="mt-auto pt-2 border-top border-custom d-flex justify-content-between align-items-center">
@@ -72,5 +72,9 @@
                 <h5 class="text-muted mt-3">Belum ada karya yang sesuai dengan filter Anda.</h5>
             </div>
         @endforelse
+    </div>
+
+    <div class="mt-4 d-flex justify-content-center">
+        {{ $karyas->links() }}
     </div>
 @endsection

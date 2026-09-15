@@ -24,10 +24,8 @@ class VerifikasiController extends Controller
     /**
      * Menyetujui karya (Ubah status jadi 'approved').
      */
-    public function approve($id)
+    public function approve(Karya $karya)
     {
-        $karya = Karya::findOrFail($id);
-
         // Status approved membuat karya tampil di katalog dan beranda publik.
         $karya->update([
             'status_verifikasi' => 'approved'
@@ -40,10 +38,8 @@ class VerifikasiController extends Controller
     /**
      * Menolak karya (Ubah status jadi 'rejected').
      */
-    public function reject($id)
+    public function reject(Karya $karya)
     {
-        $karya = Karya::findOrFail($id);
-
         // Status rejected menyimpan keputusan admin tanpa menghapus data karya.
         $karya->update([
             'status_verifikasi' => 'rejected'

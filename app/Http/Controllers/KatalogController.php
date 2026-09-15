@@ -42,25 +42,24 @@ class KatalogController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
-        $karyas = $query->get();
+        //$karyas = $query->get();
+        $karyas = $query->paginate(8)->withQueryString();
 
         return view('katalog.index', compact('karyas'));
     }
 
    
 
-    public function show($id)
-{
-    // Relasi kategori diperlukan untuk detail tampilan; ID yang tidak ada menghasilkan 404.
-    $karya = Karya::with('kategori')->findOrFail($id);
+    public function show(Karya $karya)
+    {
+        // Relasi kategori diperlukan untuk detail tampilan; model binding menangani 404 otomatis.
+        $karya->load('kategori');
 
-    // Validasi ulang status mencegah karya yang belum disetujui diakses melalui URL langsung.
-    if ($karya->status_verifikasi !== 'approved') {
+        // Validasi ulang status mencegah karya yang belum disetujui diakses melalui URL langsung.
+        if ($karya->status_verifikasi !== 'approved') {
             abort(404, 'Karya tidak ditemukan atau belum disetujui.');
         }
 
-    return view('katalog.show', compact('karya'));
-    
-    
-}
+        return view('katalog.show', compact('karya'));
+    }
 }

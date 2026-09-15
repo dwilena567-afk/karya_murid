@@ -7,7 +7,7 @@
 
 @if($keranjangs->isEmpty())
     <!-- Tampilan jika keranjang kosong -->
-    <div class="text-center py-5 bg-white border-custom rounded shadow-sm">
+    <div class="text-center py-5 ">
         <i class="bi bi-cart-x text-muted" style="font-size: 5rem;"></i>
         <h5 class="text-muted mt-3">Keranjang Anda masih kosong.</h5>
        
@@ -42,7 +42,7 @@
                             <h5 class="fw-bold text-primary-custom mb-1">{{ $item->karya->judul }}</h5>
                             <p class="text-muted small mb-2">
                                 <i class="bi bi-person-fill me-1" style="color: var(--steel-blue);"></i> 
-                                {{ $item->karya->pembuat->name ?? 'Siswa' }}
+                                {{ $item->karya->pembuat?->name ?? 'Siswa' }}
                             </p>
                             <p class="mb-0 text-muted" style="font-size: 0.85rem;">
                                 Rp{{ number_format($item->karya->harga, 0, ',', '.') }} <span class="mx-1">x</span> {{ $item->jumlah }} item

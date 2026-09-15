@@ -8,7 +8,8 @@
 
 
     <div class="card border-custom shadow-sm" style="border-radius: 12px; overflow: hidden;">
-        <div class="card-body p-0">
+        
+        <div class="card-body p-6">
             <div class="table-responsive">
                 <table class="table table-hover align-middle m-0">
                     <thead class="bg-light border-bottom border-custom">
@@ -24,20 +25,27 @@
                         @forelse($karyas as $karya)
                             <tr>
                                 <td class="px-4 py-3">
-                                    <img src="{{ asset('storage/' . $karya->gambar) }}" 
-                                         alt="{{ $karya->judul }}" 
-                                         class="rounded object-fit-cover shadow-sm border border-custom" 
-                                         style="width: 80px; height: 80px;">
+                                    @if($karya->gambar)
+                                        <img src="{{ asset('storage/' . $karya->gambar) }}" 
+                                             alt="{{ $karya->judul }}" 
+                                             class="rounded object-fit-cover shadow-sm border border-custom" 
+                                             style="width: 80px; height: 80px;">
+                                    @else
+                                        <img src="https://via.placeholder.com/80x80?text=Tidak+ada+gambar" 
+                                             alt="Placeholder" 
+                                             class="rounded object-fit-cover shadow-sm border border-custom" 
+                                             style="width: 80px; height: 80px;">
+                                    @endif
                                 </td>
                                 <td class="py-3">
                                     <h6 class="fw-bold mb-1 text-dark">{{ $karya->judul }}</h6>
-                                    <span class="badge bg-secondary mb-2">{{ $karya->kategori->nama ?? 'Umum' }}</span>
+                                    <span class="badge bg-secondary mb-2">{{ $karya->kategori?->nama ?? 'Umum' }}</span>
                                     <p class="text-muted small mb-0 d-inline-block text-truncate" style="max-width: 250px;">
                                         {{ $karya->deskripsi }}
                                     </p>
                                 </td>
                                 <td class="py-3">
-                                    <span class="fw-medium text-dark"><i class="bi bi-person me-1"></i> {{ $karya->pembuat->name ?? 'Anonim' }}</span>
+                                    <span class="fw-medium text-dark"><i class="bi bi-person me-1"></i> {{ $karya->pembuat?->name ?? 'Anonim' }}</span>
                                 </td>
                                 <td class="py-3 fw-bold text-accent">
                                     Rp {{ number_format($karya->harga, 0, ',', '.') }}

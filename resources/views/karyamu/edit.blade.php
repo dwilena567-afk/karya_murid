@@ -52,7 +52,11 @@
                         @enderror
                         <div class="mt-2">
                             <small class="text-muted">Gambar saat ini:</small><br>
-                            <img src="{{ asset('storage/' . $karya->gambar) }}" class="rounded mt-1 border border-custom" style="height: 100px;">
+                            @if($karya->gambar)
+                                <img src="{{ asset('storage/' . $karya->gambar) }}" class="rounded mt-1 border border-custom" style="height: 100px;">
+                            @else
+                                <img src="https://via.placeholder.com/100x100?text=Tidak+ada+gambar" class="rounded mt-1 border border-custom" style="height: 100px;">
+                            @endif
                         </div>
                     </div>
                 </div>

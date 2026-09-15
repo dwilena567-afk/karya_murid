@@ -46,7 +46,9 @@ class KaryamuController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
-        $karyas = $query->get();
+        //$karyas = $query->get();
+        $karyas = $query->paginate(8)->withQueryString();
+
         return view('karyamu.index', compact('karyas'));
 
     }
