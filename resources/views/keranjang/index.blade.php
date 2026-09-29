@@ -39,7 +39,7 @@
                              
                         <!-- Detail Produk -->
                         <div class="flex-grow-1 text-center text-md-start w-100">
-                            <h5 class="fw-bold text-primary-custom mb-1">{{ $item->karya->judul }}</h5>
+                            <h5 class="fw-bold text-primary-custom mb-1 title-clamp" title="{{ $item->karya->judul }}">{{ $item->karya->judul }}</h5>
                             <p class="text-muted small mb-2">
                                 <i class="bi bi-person-fill me-1" style="color: var(--steel-blue);"></i> 
                                 {{ $item->karya->pembuat?->name ?? 'Siswa' }}
@@ -54,7 +54,7 @@
                             <h5 class="fw-bold text-accent mb-3">Rp{{ number_format($subtotal, 0, ',', '.') }}</h5>
                             
                             <!-- Tombol Hapus Terhubung dengan Controller -->
-                            <form action="{{ route('keranjang.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Hapus karya ini dari keranjang?');">
+                            <form action="{{ route('keranjang.destroy', $item->id) }}" method="POST" data-confirm="Hapus karya ini dari keranjang?" data-confirm-title="Hapus dari Keranjang">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-outline-danger btn-sm fw-bold w-100 w-md-auto">

@@ -16,6 +16,13 @@ class KatalogController extends Controller
             $query->where('judul', 'like', '%' . $request->search . '%');
         }
 
+        // Filter berdasarkan nama pembuat
+        if ($request->filled('pembuat')) {
+            $query->whereHas('pembuat', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->pembuat . '%');
+            });
+        }
+
         if ($request->filled('kategori')) {
             $query->where('kategori_id', $request->kategori);
         }

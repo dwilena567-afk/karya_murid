@@ -1,29 +1,6 @@
 @extends('layouts.main')
 
 @section('content')
-<style>
-    /* Efek hover khusus untuk kartu produk */
-    .product-card {
-        background: white;
-        border: 1px solid var(--wisteria-blue);
-        border-radius: 8px;
-        overflow: hidden;
-        transition: all 0.3s ease;
-    }
-    .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(62, 124, 177, 0.2);
-        border-color: var(--steel-azure);
-    }
-    .badge-category {
-        background-color: var(--wisteria-blue);
-        color: white;
-        font-weight: 500;
-    }
-    .action-buttons {
-        border-top: 1px dashed var(--wisteria-blue);
-    }
-</style>
 
  <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="fw-bold text-primary-custom m-0">Karyamu</h4>
@@ -65,7 +42,7 @@
             
             <!-- Badan Kartu -->
             <div class="p-3 d-flex flex-column flex-grow-1">
-                <h6 class="fw-bold text-primary-custom mb-1" style="line-height: 1.3;">{{ $karya->judul }}</h6>
+                <h6 class="fw-bold text-primary-custom mb-1 title-clamp" style="line-height: 1.3;" title="{{ $karya->judul }}">{{ $karya->judul }}</h6>
                 
                 <div class="mt-auto pt-2 border-top border-custom d-flex justify-content-between align-items-center mb-3">
                     <span class="fw-bold text-accent fs-6">Rp{{ number_format($karya->harga, 0, ',', '.') }}</span>
@@ -81,7 +58,7 @@
                     <a href="{{ route('karyamu.edit', $karya->id) }}" class="btn btn-sm btn-outline-primary flex-grow-1 fw-bold" title="Edit Karya">
                         <i class="bi bi-pencil-square me-1"></i> Edit
                     </a>
-                    <form action="{{ route('karyamu.destroy', $karya->id) }}" method="POST" class="flex-grow-1 d-flex" onsubmit="return confirm('Apakah Anda yakin ingin menghapus karya ini?');">
+                    <form action="{{ route('karyamu.destroy', $karya->id) }}" method="POST" class="flex-grow-1 d-flex" data-confirm="Apakah Anda yakin ingin menghapus karya ini?" data-confirm-title="Hapus Karya">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-sm btn-outline-danger w-100 fw-bold" title="Hapus Karya">
