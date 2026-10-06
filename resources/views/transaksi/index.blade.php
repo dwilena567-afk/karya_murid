@@ -73,7 +73,7 @@
                                     </td>
                                     <td class="py-3">
                                         @if(in_array($trx->transaction_status, ['settlement', 'capture']))
-                                            <span class="badge bg-success px-3 py-2 rounded-pill">Berhasil</span>
+                                            <span class="badge bg-success px-3 py-2 rounded-pill">Lunas</span>
                                         @elseif($trx->transaction_status === 'pending')
                                             <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Menunggu Pembayaran</span>
                                         @elseif($trx->transaction_status === 'expire')
@@ -152,7 +152,7 @@
                                             @if($jual->transaksi->transaction_status == 'settlement' || $jual->transaksi->transaction_status == 'capture')
                                                 <span class="badge bg-success px-3 py-2 rounded-pill">Lunas</span>
                                             @elseif($jual->transaksi->transaction_status == 'pending')
-                                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Pending</span>
+                                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Menunggu Pembayaran</span>
                                             @elseif($jual->transaksi->transaction_status == 'expire')
                                                 <span class="badge bg-danger px-3 py-2 rounded-pill">Gagal / Expired</span>
                                             @else
@@ -229,7 +229,7 @@
                                             @if($global->transaksi->transaction_status == 'settlement' || $global->transaksi->transaction_status == 'capture')
                                                 <span class="badge bg-success px-3 py-2 rounded-pill">Lunas</span>
                                             @elseif($global->transaksi->transaction_status == 'pending')
-                                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Pending</span>
+                                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">Menunggu Pembayaran</span>
                                             @elseif($global->transaksi->transaction_status == 'expire')
                                                 <span class="badge bg-danger px-3 py-2 rounded-pill">Gagal / Expired</span>
                                             @else

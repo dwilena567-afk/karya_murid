@@ -208,6 +208,19 @@
         box-shadow: 0 10px 20px rgba(62, 124, 177, 0.2);
         border-color: var(--steel-azure);
     }
+
+     .image-card {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    .image-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(62, 124, 177, 0.2);
+        border-color: var(--steel-azure);
+    }
+
     .badge-category {
         background-color: var(--wisteria-blue);
         color: white;
@@ -440,6 +453,21 @@
                 localStorage.setItem(storageKey, String(collapsed));
             });
         })();
+    </script>
+    <script>
+        const images = document.querySelectorAll('.clickable-gallery');
+
+        images.forEach(img => {
+            img.addEventListener('click', function () {
+                Swal.fire({
+                    imageUrl: this.querySelector('img').src,
+                    imageWidth: 700,
+                    width: '750px',
+                   
+                    showConfirmButton: false
+                });
+            });
+        });
     </script>
 </body>
 
