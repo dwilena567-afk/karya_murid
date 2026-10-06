@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="fw-bold text-primary-custom m-0">Buat Karya</h4>
+        <h4 class="fw-bold text-primary-custom m-0">Tambah Karya</h4>
     </div>
 
 <div class="container" style="max-width: 800px;">

@@ -65,6 +65,7 @@ class DashboardController extends Controller
             'chartLabels',
             'chartData'
         ));
+        
 
     }
 }

@@ -39,7 +39,7 @@ class TransaksiController extends Controller
                 'order_id' => 'TRX-' . time() . '-' . $user->id,
                 'user_id' => $user->id,
                 'gross_amount' => $gross_amount,
-                'transaction_status' => 'pending', 
+                'transaction_status' => 'pending',
             ]);
 
             foreach ($keranjangs as $item) {
@@ -87,20 +87,51 @@ class TransaksiController extends Controller
         if ($transaksi->user_id !== Auth::id()) {
             abort(403, 'Unauthorized');
         }
+        $this->refreshPendingPaymentStatus($transaksi);
         $transaksi->load(['details.karya']);
-        
+
         return view('transaksi.show', compact('transaksi'));
     }
 
     /** Menampilkan riwayat transaksi milik pengguna yang sedang login. */
     public function index()
     {
-        $transaksis = Transaksi::with(['details.karya'])
-            ->where('user_id', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->get();
+       $user = auth()->user();
+        $perPage = 10;
 
-        return view('transaksi.index', compact('transaksis'));
+        // 1. Pembelian Milik User Sendiri
+        $pembelian = Transaksi::with(['details.karya'])
+                        ->where('user_id', $user->id)
+                        ->latest()
+                        ->paginate($perPage, ['*'], 'pembelian_page')
+                        ->withQueryString();
+
+        foreach ($pembelian->getCollection() as $transaksi) {
+            $this->refreshPendingPaymentStatus($transaksi);
+        }
+
+        // 2. Penjualan Karya Milik User Sendiri (untuk Pembeli & Admin)
+        $penjualan = collect();
+        if (in_array($user->role, ['pembeli', 'admin'])) {
+            $penjualan = TransaksiDetail::with(['transaksi.user', 'karya'])
+                            ->whereHas('karya', function($query) use ($user) {
+                                $query->where('user_id', $user->id);
+                            })
+                            ->latest()
+                            ->paginate($perPage, ['*'], 'penjualan_page')
+                            ->withQueryString();
+        }
+
+        // 3. Penjualan Global (Khusus Admin)
+        $penjualanGlobal = collect();
+        if ($user->role === 'admin') {
+            $penjualanGlobal = TransaksiDetail::with(['transaksi.user', 'karya.pembuat'])
+                                ->latest()
+                                ->paginate($perPage, ['*'], 'penjualan_global_page')
+                                ->withQueryString();
+        }
+
+        return view('transaksi.index', compact('pembelian', 'penjualan', 'penjualanGlobal'));
     }
 
     /**
@@ -161,14 +192,49 @@ class TransaksiController extends Controller
     private function configureMidtrans(): void
     {
         // Konfigurasi harus di-set pada setiap request karena PHP tidak menyimpan state antar-request.
-        \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
-        \Midtrans\Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
-        \Midtrans\Config::$isSanitized = true;
-        \Midtrans\Config::$is3ds = true;
+        \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
+        \Midtrans\Config::$isProduction = config('services.midtrans.is_production', false);
+        \Midtrans\Config::$isSanitized = config('services.midtrans.is_sanitized', true);
+        \Midtrans\Config::$is3ds = config('services.midtrans.is_3ds', true);
+    }
+
+    private function refreshPendingPaymentStatus(Transaksi $transaksi): void
+    {
+        if ($transaksi->transaction_status !== 'pending') {
+            return;
+        }
+
+        try {
+            $this->configureMidtrans();
+            $status = \Midtrans\Transaction::status($transaksi->order_id);
+            $statusOrderId = data_get($status, 'order_id');
+            $transactionStatus = data_get($status, 'transaction_status');
+
+            if ($statusOrderId !== $transaksi->order_id || !is_string($transactionStatus)) {
+                return;
+            }
+
+            $this->syncPaymentStatus(
+                $statusOrderId,
+                $transactionStatus,
+                data_get($status, 'payment_type'),
+                data_get($status, 'fraud_status')
+            );
+            $transaksi->refresh();
+        } catch (\Throwable $e) {
+            // Gunakan batas waktu lokal bila status Midtrans tidak dapat diambil.
+            $expiryHours = (int) env('MIDTRANS_EXPIRY_HOURS', 24);
+            if ($transaksi->created_at?->lte(now()->subHours($expiryHours))) {
+                $this->syncPaymentStatus($transaksi->order_id, 'expire', null, null);
+                $transaksi->refresh();
+            }
+        }
     }
 
     private function syncPaymentStatus(string $orderId, string $transactionStatus, ?string $paymentType, ?string $fraudStatus): void
     {
+        $transactionStatus = strtolower(trim($transactionStatus));
+
         // Hanya status settlement/capture yang dianggap berhasil dan boleh mengubah stok.
         $isSuccessful = in_array($transactionStatus, ['settlement', 'capture'], true)
             && ($transactionStatus !== 'capture' || $fraudStatus === null || $fraudStatus === 'accept');

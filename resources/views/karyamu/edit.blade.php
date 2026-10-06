@@ -53,7 +53,9 @@
                         <div class="mt-2">
                             <small class="text-muted">Gambar saat ini:</small><br>
                             @if($karya->gambar)
-                                <img src="{{ asset('storage/' . $karya->gambar) }}" class="rounded mt-1 border border-custom" style="height: 100px;">
+                                <div class="clickable-gallery d-inline-block mt-1" style="cursor: pointer;">
+                                    <img src="{{ asset('storage/' . $karya->gambar) }}" class="image-card rounded border border-custom" style="height: 100px;">
+                                </div>
                             @else
                                 <img src="https://via.placeholder.com/100x100?text=Tidak+ada+gambar" class="rounded mt-1 border border-custom" style="height: 100px;">
                             @endif

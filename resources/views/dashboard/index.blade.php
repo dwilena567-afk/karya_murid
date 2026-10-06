@@ -6,7 +6,7 @@
         <h4 class="fw-bold text-primary-custom m-0">Dashboard</h4>
     </div>
 
-<div class="container py-3">
+<div class="container py-3 dashboard-page">
     <!-- Summary Cards -->
     <div class="row g-4 mb-5">
         <div class="col-md-4">
@@ -14,12 +14,20 @@
                 <!-- Aksen warna samping -->
                 <div class="position-absolute top-0 start-0 h-100" style="width: 5px; background-color: var(--steel-azure);"></div>
                 <div class="card-body p-4 ms-2 d-flex justify-content-between align-items-center">
-                    <div>
+                    <div class="w-100">
                         <p class="text-muted fw-bold mb-1" style="font-size: 0.85rem; letter-spacing: 0.5px;">TOTAL KARYA</p>
                         <h3 class="fw-bold text-dark m-0">{{ number_format($totalKarya) }}</h3>
+
+                        <div class="mt-3">
+                            <a href="{{ route('karyamu.index') }}" class="btn btn-sm bg-primary-custom text-white fw-bold px-3">
+                                <i class="bi bi-pencil-square me-1"></i>Kelola Karyamu
+                            </a>
+
+                        </div>
+
                     </div>
                     <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                        <i class="bi bi-image text-primary-custom fs-4"></i>
+                        <i class="bi bi-image text-primary-custom fs-1"></i>
                     </div>
                 </div>
             </div>
@@ -32,9 +40,17 @@
                     <div>
                         <p class="text-muted fw-bold mb-1" style="font-size: 0.85rem; letter-spacing: 0.5px;">KARYA TERJUAL</p>
                         <h3 class="fw-bold text-dark m-0">{{ number_format($totalTerjual) }} <small class="text-muted fs-6">Item</small></h3>
+
+                        <div class="mt-3">
+                            <a href="{{ route('transaksi.index') }}" class="btn btn-sm bg-primary-custom text-white fw-bold px-3">
+                                <i class="bi bi-archive me-1"></i>Riwayat Transaksi
+
+                            </a>
+
+                        </div>
                     </div>
                     <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                        <i class="bi bi-cart-check" style="color: var(--wisteria-blue); font-size: 1.5rem;"></i>
+                        <i class="bi bi-cart-check fs-1" style="color: var(--wisteria-blue); font-size: 1.5rem;"></i>
                     </div>
                 </div>
             </div>
@@ -49,7 +65,7 @@
                         <h3 class="fw-bold text-accent m-0">Rp{{ number_format($totalPendapatan, 0, ',', '.') }}</h3>
                     </div>
                     <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                        <i class="bi bi-cash-stack text-accent fs-4"></i>
+                        <i class="bi bi-cash-stack text-accent fs-1"></i>
                     </div>
                 </div>
             </div>
@@ -71,6 +87,23 @@
         </div>
     </div>
 </div>
+
+<style>
+    .dashboard-page .btn {
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+
+    .dashboard-page .btn:not(:disabled):hover {
+        transform: translateY(-1px);
+        box-shadow: 0 0.25rem 0.5rem rgba(5, 74, 145, 0.2) !important;
+    }
+
+    .dashboard-page .bg-primary-custom:hover {
+        background-color: #043b73 !important;
+        color: white !important;
+    }
+</style>
+
 
 <!-- Import library Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -142,4 +175,6 @@
         });
     });
 </script>
+
+
 @endsection

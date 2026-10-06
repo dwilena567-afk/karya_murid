@@ -40,9 +40,7 @@
                                 <td class="py-3">
                                     <h6 class="fw-bold mb-1 text-dark">{{ $karya->judul }}</h6>
                                     <span class="badge bg-secondary mb-2">{{ $karya->kategori?->nama ?? 'Umum' }}</span>
-                                    <p class="text-muted small mb-0 d-inline-block text-truncate" style="max-width: 250px;">
-                                        {{ $karya->deskripsi }}
-                                    </p>
+                                    
                                 </td>
                                 <td class="py-3">
                                     <span class="fw-medium text-dark"><i class="bi bi-person me-1"></i> {{ $karya->pembuat?->name ?? 'Anonim' }}</span>
@@ -54,19 +52,19 @@
                                     <div class="d-flex justify-content-center gap-2">
                                         
                                         <!-- Tombol Setujui -->
-                                        <form action="{{ route('verifikasi.approve', $karya->id) }}" method="POST">
+                                        <form action="{{ route('verifikasi.approve', $karya->id) }}" method="POST" data-confirm="Karya akan langsung tampil di katalog publik setelah disetujui." data-confirm-title="Setujui Karya">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit" class="btn btn-sm btn-success fw-bold shadow-sm" title="Setujui Karya" onclick="return confirm('Yakin ingin menyetujui karya ini? Karya akan langsung tampil di katalog publik.');">
+                                            <button type="submit" class="btn btn-sm btn-success fw-bold shadow-sm" title="Setujui Karya">
                                                 <i class="bi bi-check-lg me-1"></i> Setujui
                                             </button>
                                         </form>
                                         
                                         <!-- Tombol Tolak -->
-                                        <form action="{{ route('verifikasi.reject', $karya->id) }}" method="POST">
+                                        <form action="{{ route('verifikasi.reject', $karya->id) }}" method="POST" data-confirm="Karya ini tidak akan ditampilkan di katalog." data-confirm-title="Tolak Karya">
                                             @csrf
                                             @method('PATCH')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger fw-bold shadow-sm" title="Tolak Karya" onclick="return confirm('Tolak karya ini? Karya tidak akan ditampilkan di katalog.');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger fw-bold shadow-sm" title="Tolak Karya">
                                                 <i class="bi bi-x-lg me-1"></i> Tolak
                                             </button>
                                         </form>

@@ -20,7 +20,7 @@
             </div>
         </form>
 
-        <form method="POST" action="{{ route('logout') }}">
+        <form method="POST" action="{{ route('logout') }}" id="verification-logout-form">
             @csrf
 
             <button type="submit" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -28,4 +28,29 @@
             </button>
         </form>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.getElementById('verification-logout-form').addEventListener('submit', function (event) {
+            if (this.dataset.confirmed === 'true') return;
+
+            event.preventDefault();
+            const form = this;
+            Swal.fire({
+                icon: 'warning',
+                title: 'Konfirmasi Logout',
+                text: 'Keluar dari akun sekarang?',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, logout',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#054A91',
+                cancelButtonColor: '#6c757d'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    form.dataset.confirmed = 'true';
+                    form.requestSubmit();
+                }
+            });
+        });
+    </script>
 </x-guest-layout>
