@@ -1,10 +1,11 @@
 <?php
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Karya;
 use App\Models\Keranjang;
 use App\Models\Transaksi;
 use App\Models\TransaksiDetail;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -19,8 +20,7 @@ class TransaksiController extends Controller
     {
         $user = Auth::user();
 
-        // Eager loading karya mencegah query tambahan saat menghitung total dan menyimpan detail.
-        $keranjangs = Keranjang::with('karya')->where('user_id', $user->id)->get();
+        $keranjangs = Keranjang::where('user_id', $user->id)->get();
 
         if ($keranjangs->isEmpty()) {
             return redirect()->back()->with('error', 'Keranjang belanja Anda masih kosong.');
@@ -28,10 +28,31 @@ class TransaksiController extends Controller
 
         DB::beginTransaction();
         try {
-            // Total dihitung dari harga saat checkout; detail di bawah menyimpan snapshot yang sama.
+            // Lock products before cart rows, matching the add-to-cart lock order.
+            $karyas = Karya::whereIn('id', $keranjangs->pluck('karya_id')->unique())
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+            $keranjangs = Keranjang::where('user_id', $user->id)->lockForUpdate()->get();
+
+            foreach ($keranjangs->groupBy('karya_id') as $karyaId => $items) {
+                $karya = $karyas->get($karyaId);
+                $jumlahDiKeranjang = $items->sum('jumlah');
+
+                if (!$karya || $jumlahDiKeranjang > $karya->stok) {
+                    $judul = $karya?->judul ?? 'Karya';
+                    $stok = $karya?->stok ?? 0;
+                    throw new \RuntimeException(
+                        "Stok {$judul} tidak mencukupi. Stok tersedia: {$stok}, jumlah di keranjang: {$jumlahDiKeranjang}."
+                    );
+                }
+            }
+
+            // Total dihitung dari harga saat checkout; detail menyimpan snapshot yang sama.
             $gross_amount = 0;
             foreach ($keranjangs as $item) {
-                $gross_amount += $item->karya->harga * $item->jumlah;
+                $gross_amount += $karyas[$item->karya_id]->harga * $item->jumlah;
             }
 
             // Simpan snapshot harga dan jumlah saat checkout; harga katalog dapat berubah setelahnya.
@@ -42,12 +63,12 @@ class TransaksiController extends Controller
                 'transaction_status' => 'pending',
             ]);
 
-            foreach ($keranjangs as $item) {
+            foreach ($keranjangs->groupBy('karya_id') as $karyaId => $items) {
                 TransaksiDetail::create([
                     'transaksi_id' => $transaksi->id,
-                    'karya_id' => $item->karya_id,
-                    'harga_satuan' => $item->karya->harga,
-                    'jumlah' => $item->jumlah
+                    'karya_id' => $karyaId,
+                    'harga_satuan' => $karyas[$karyaId]->harga,
+                    'jumlah' => $items->sum('jumlah'),
                 ]);
             }
 
@@ -89,8 +110,9 @@ class TransaksiController extends Controller
         }
         $this->refreshPendingPaymentStatus($transaksi);
         $transaksi->load(['details.karya']);
+        $hasPaidDuplicateKarya = $this->hasPaidTransactionForSameKarya($transaksi);
 
-        return view('transaksi.show', compact('transaksi'));
+        return view('transaksi.show', compact('transaksi', 'hasPaidDuplicateKarya'));
     }
 
     /** Menampilkan riwayat transaksi milik pengguna yang sedang login. */
@@ -165,6 +187,12 @@ class TransaksiController extends Controller
             abort(403, 'Unauthorized');
         }
 
+        if ($this->hasPaidTransactionForSameKarya($transaksi)) {
+            return response()->json([
+                'message' => 'Karya pada transaksi ini sudah dibayar melalui transaksi lain.',
+            ], 409);
+        }
+
         $this->configureMidtrans();
         $status = \Midtrans\Transaction::status($transaksi->order_id);
         $statusOrderId = data_get($status, 'order_id');
@@ -187,6 +215,23 @@ class TransaksiController extends Controller
             'status' => $transactionStatus,
             'successful' => in_array($transactionStatus, ['settlement', 'capture'], true),
         ]);
+    }
+
+    private function hasPaidTransactionForSameKarya(Transaksi $transaksi): bool
+    {
+        $karyaIds = $transaksi->details->pluck('karya_id');
+
+        if ($karyaIds->isEmpty()) {
+            return false;
+        }
+
+        return TransaksiDetail::whereIn('karya_id', $karyaIds)
+            ->where('transaksi_id', '!=', $transaksi->id)
+            ->whereHas('transaksi', function ($query) use ($transaksi) {
+                $query->where('user_id', $transaksi->user_id)
+                    ->whereIn('transaction_status', ['settlement', 'capture']);
+            })
+            ->exists();
     }
 
     private function configureMidtrans(): void

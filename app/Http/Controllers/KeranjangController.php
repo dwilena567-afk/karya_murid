@@ -1,9 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\Karya;
 use App\Models\Keranjang;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class KeranjangController extends Controller
 {
@@ -17,16 +19,43 @@ class KeranjangController extends Controller
     public function store(Request $request)
     {
         // Validasi mencegah produk fiktif dan jumlah nol masuk ke keranjang.
-        $request->validate([
+        $validated = $request->validate([
             'karya_id' => 'required|exists:karyas,id',
             'jumlah' => 'required|integer|min:1'
         ]);
-    // user_id berasal dari session, bukan input browser, agar keranjang tidak dapat dimiliki user lain.
-        Keranjang::create([
-            'user_id' => Auth::id(),
-            'karya_id' => $request->karya_id,
-            'jumlah' => $request->jumlah
-        ]);
+
+        // Lock the work so simultaneous add requests cannot exceed its stock.
+        $error = DB::transaction(function () use ($validated) {
+            $karya = Karya::whereKey($validated['karya_id'])->lockForUpdate()->firstOrFail();
+            $items = Keranjang::where('user_id', Auth::id())
+                ->where('karya_id', $karya->id)
+                ->lockForUpdate()
+                ->get();
+            $jumlahDiKeranjang = $items->sum('jumlah');
+            $jumlahBaru = $jumlahDiKeranjang + $validated['jumlah'];
+
+            if ($jumlahBaru > $karya->stok) {
+                return "Stok {$karya->judul} tidak mencukupi. Stok tersedia: {$karya->stok}, jumlah di keranjang: {$jumlahDiKeranjang}.";
+            }
+
+            if ($items->isEmpty()) {
+                Keranjang::create([
+                    'user_id' => Auth::id(),
+                    'karya_id' => $karya->id,
+                    'jumlah' => $jumlahBaru,
+                ]);
+            } else {
+                $item = $items->first();
+                $item->update(['jumlah' => $jumlahBaru]);
+                $items->skip(1)->each->delete();
+            }
+
+            return null;
+        });
+
+        if ($error !== null) {
+            return redirect()->back()->with('error', $error);
+        }
 
         return redirect()->back()->with('success', 'Karya berhasil ditambahkan ke keranjang!');
     }
