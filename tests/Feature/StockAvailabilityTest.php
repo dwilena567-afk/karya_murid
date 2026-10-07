@@ -67,40 +67,39 @@ class StockAvailabilityTest extends TestCase
         ]);
     }
 
-    public function test_pending_transaction_cannot_be_paid_if_the_same_user_already_paid_for_a_karya(): void
+    public function test_pending_transaction_cannot_be_paid_when_current_stock_is_insufficient(): void
     {
         $user = User::factory()->create();
-        $karya = $this->createKarya(stok: 1);
-        $paid = $this->createTransaction($user, $karya, 'settlement', null, 'PAID-ORDER');
+        $karya = $this->createKarya(stok: 0);
         $pending = $this->createTransaction($user, $karya, 'pending', 'snap-token', 'PENDING-ORDER');
 
         $response = $this->actingAs($user)->get(route('transaksi.show', $pending));
 
         $response->assertOk()
-            ->assertSee('Karya pada transaksi ini sudah dibayar melalui transaksi lain.')
+            ->assertSee('Stok karya pada transaksi ini tidak lagi mencukupi.')
             ->assertDontSee('Bayar Sekarang');
 
         $this->actingAs($user)
             ->post(route('transaksi.confirm-payment', $pending))
             ->assertStatus(409)
             ->assertJson([
-                'message' => 'Karya pada transaksi ini sudah dibayar melalui transaksi lain.',
+                'message' => 'Stok karya pada transaksi ini tidak lagi mencukupi.',
             ]);
     }
 
-    public function test_pending_transaction_remains_payable_when_paid_transaction_contains_different_karya(): void
+    public function test_restocked_karya_is_payable_again_in_a_pending_transaction(): void
     {
         $user = User::factory()->create();
-        $paidKarya = $this->createKarya(stok: 1);
-        $pendingKarya = $this->createKarya(stok: 1);
-        $this->createTransaction($user, $paidKarya, 'settlement', null, 'PAID-DIFFERENT-ORDER');
-        $pending = $this->createTransaction($user, $pendingKarya, 'pending', 'snap-token', 'PENDING-DIFFERENT-ORDER');
+        $karya = $this->createKarya(stok: 0);
+        $this->createTransaction($user, $karya, 'settlement', null, 'PAID-RESTOCK-ORDER');
+        $karya->update(['stok' => 1]);
+        $pending = $this->createTransaction($user, $karya, 'pending', 'snap-token', 'PENDING-RESTOCK-ORDER');
 
         $response = $this->actingAs($user)->get(route('transaksi.show', $pending));
 
         $response->assertOk()
             ->assertSee('Bayar Sekarang')
-            ->assertDontSee('Pembayaran untuk transaksi ini tidak tersedia.');
+            ->assertDontSee('Stok karya pada transaksi ini tidak lagi mencukupi.');
     }
 
     private function createKarya(int $stok): Karya

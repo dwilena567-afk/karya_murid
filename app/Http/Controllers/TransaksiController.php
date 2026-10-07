@@ -110,9 +110,9 @@ class TransaksiController extends Controller
         }
         $this->refreshPendingPaymentStatus($transaksi);
         $transaksi->load(['details.karya']);
-        $hasPaidDuplicateKarya = $this->hasPaidTransactionForSameKarya($transaksi);
+        $hasInsufficientStock = $this->hasInsufficientStock($transaksi);
 
-        return view('transaksi.show', compact('transaksi', 'hasPaidDuplicateKarya'));
+        return view('transaksi.show', compact('transaksi', 'hasInsufficientStock'));
     }
 
     /** Menampilkan riwayat transaksi milik pengguna yang sedang login. */
@@ -187,9 +187,9 @@ class TransaksiController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        if ($this->hasPaidTransactionForSameKarya($transaksi)) {
+        if ($this->hasInsufficientStock($transaksi)) {
             return response()->json([
-                'message' => 'Karya pada transaksi ini sudah dibayar melalui transaksi lain.',
+                'message' => 'Stok karya pada transaksi ini tidak lagi mencukupi.',
             ], 409);
         }
 
@@ -217,21 +217,28 @@ class TransaksiController extends Controller
         ]);
     }
 
-    private function hasPaidTransactionForSameKarya(Transaksi $transaksi): bool
+    private function hasInsufficientStock(Transaksi $transaksi): bool
     {
-        $karyaIds = $transaksi->details->pluck('karya_id');
+        $jumlahPerKarya = TransaksiDetail::where('transaksi_id', $transaksi->id)
+            ->select('karya_id')
+            ->selectRaw('SUM(jumlah) as jumlah')
+            ->groupBy('karya_id')
+            ->get();
 
-        if ($karyaIds->isEmpty()) {
+        if ($jumlahPerKarya->isEmpty()) {
             return false;
         }
 
-        return TransaksiDetail::whereIn('karya_id', $karyaIds)
-            ->where('transaksi_id', '!=', $transaksi->id)
-            ->whereHas('transaksi', function ($query) use ($transaksi) {
-                $query->where('user_id', $transaksi->user_id)
-                    ->whereIn('transaction_status', ['settlement', 'capture']);
-            })
-            ->exists();
+        $stokPerKarya = Karya::whereIn('id', $jumlahPerKarya->pluck('karya_id'))
+            ->pluck('stok', 'id');
+
+        foreach ($jumlahPerKarya as $item) {
+            if (!isset($stokPerKarya[$item->karya_id]) || $stokPerKarya[$item->karya_id] < $item->jumlah) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function configureMidtrans(): void

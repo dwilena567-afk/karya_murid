@@ -68,9 +68,9 @@
         </div>
     </div>
 
-    @if($hasPaidDuplicateKarya && $transaksi->transaction_status === 'pending')
+    @if($hasInsufficientStock && $transaksi->transaction_status === 'pending')
         <div class="alert alert-warning mt-4 mb-0">
-            Karya pada transaksi ini sudah dibayar melalui transaksi lain. Pembayaran untuk transaksi ini tidak tersedia.
+            Stok karya pada transaksi ini tidak lagi mencukupi. Pembayaran tidak tersedia.
         </div>
     @elseif($transaksi->snap_token && $transaksi->transaction_status === 'pending')
         <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
