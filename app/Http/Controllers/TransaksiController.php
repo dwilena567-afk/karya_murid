@@ -268,9 +268,17 @@ class TransaksiController extends Controller
     {
         // Konfigurasi harus di-set pada setiap request karena PHP tidak menyimpan state antar-request.
         \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
-        \Midtrans\Config::$isProduction = config('services.midtrans.is_production', false);
-        \Midtrans\Config::$isSanitized = config('services.midtrans.is_sanitized', true);
-        \Midtrans\Config::$is3ds = config('services.midtrans.is_3ds', true);
+        \Midtrans\Config::$clientKey = config('services.midtrans.client_key');
+
+        // Cast configuration flags to boolean to avoid 'false' string being truthy.
+        \Midtrans\Config::$isProduction = filter_var(config('services.midtrans.is_production', false), FILTER_VALIDATE_BOOLEAN);
+        \Midtrans\Config::$isSanitized = filter_var(config('services.midtrans.is_sanitized', true), FILTER_VALIDATE_BOOLEAN);
+        \Midtrans\Config::$is3ds = filter_var(config('services.midtrans.is_3ds', true), FILTER_VALIDATE_BOOLEAN);
+
+        // Optional: ensure server key is present to provide clearer error messages.
+        if (empty(\Midtrans\Config::$serverKey)) {
+            throw new \RuntimeException('Midtrans server key tidak dikonfigurasi. Periksa MIDTRANS_SERVER_KEY di .env');
+        }
     }
 
     private function refreshPendingPaymentStatus(Transaksi $transaksi): void

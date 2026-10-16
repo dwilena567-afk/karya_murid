@@ -4,17 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Models\Karya;
 use App\Models\TransaksiDetail;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
     /**
-     * Menyediakan kartu ringkasan dan tren tujuh hari untuk karya milik pengguna.
+     * Menyediakan ringkasan dan tren penjualan untuk pengguna yang sedang login.
      * Hanya transaksi settlement/capture yang sudah berhasil masuk perhitungan.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $validated = $request->validate([
+            'periode' => ['sometimes', 'in:7_minggu,1_bulan,1_tahun,all_time'],
+        ]);
+        $periode = $validated['periode'] ?? '7_minggu';
+        $durasiTren = [
+            '7_minggu' => ['label' => '7 Minggu Terakhir', 'mulai' => now()->subWeeks(7)],
+            '1_bulan' => ['label' => '1 Bulan Terakhir', 'mulai' => now()->subMonth()],
+            '1_tahun' => ['label' => '1 Tahun Terakhir', 'mulai' => now()->subYear()],
+            'all_time' => ['label' => 'Sepanjang Waktu', 'mulai' => null],
+        ][$periode];
+
         $user = Auth::user();
         $karyasMenungguVerifikasi = collect();
 
@@ -22,7 +34,9 @@ class DashboardController extends Controller
             $karyasMenungguVerifikasi = Karya::with(['pembuat', 'kategori'])
                 ->where('status_verifikasi', 'pending')
                 ->latest()
-                ->get();
+                ->paginate(5, ['*'], 'verifikasi_page')
+                ->withQueryString()
+                ->fragment('verifikasi');
         }
 
         // Semua metrik dibatasi pada karya milik pengguna yang sedang login.
@@ -55,7 +69,9 @@ class DashboardController extends Controller
             ->where(function ($q) {
                 $q->whereIn('transaksis.transaction_status', ['settlement', 'capture']);
             })
-            ->where('transaksi_details.created_at', '>=', now()->subDays(7))
+            ->when($durasiTren['mulai'], function ($query, $mulai) {
+                $query->where('transaksi_details.created_at', '>=', $mulai);
+            })
             ->groupBy('tanggal')
             ->orderBy('tanggal', 'asc')
             ->get();
@@ -64,13 +80,35 @@ class DashboardController extends Controller
         $chartLabels = $penjualanHarian->pluck('tanggal')->toArray();
         $chartData = $penjualanHarian->pluck('pendapatan')->toArray();
 
+        $karyaTerpopuler = TransaksiDetail::select(
+            'karyas.id',
+            'karyas.judul',
+            'karyas.gambar',
+            DB::raw('SUM(transaksi_details.jumlah) as total_terjual')
+        )
+            ->join('karyas', 'transaksi_details.karya_id', '=', 'karyas.id')
+            ->join('transaksis', 'transaksi_details.transaksi_id', '=', 'transaksis.id')
+            ->where('karyas.user_id', $user->id)
+            ->whereIn('transaksis.transaction_status', ['settlement', 'capture'])
+            ->when($durasiTren['mulai'], function ($query, $mulai) {
+                $query->where('transaksi_details.created_at', '>=', $mulai);
+            })
+            ->groupBy('karyas.id', 'karyas.judul', 'karyas.gambar')
+            ->orderByDesc('total_terjual')
+            ->orderBy('karyas.judul')
+            ->limit(5)
+            ->get();
+
         return view('dashboard.index', compact(
             'totalKarya',
             'totalTerjual',
             'totalPendapatan',
             'chartLabels',
             'chartData',
-            'karyasMenungguVerifikasi'
+            'karyaTerpopuler',
+            'karyasMenungguVerifikasi',
+            'periode',
+            'durasiTren'
         ));
         
 

@@ -261,8 +261,8 @@
                 <div class="app-account d-flex flex-column flex-lg-row align-items-lg-center gap-2">
                     @auth
                         <div class="px-2">
-                            <div class="text-white small">Halo, <strong>{{ auth()->user()->name }}</strong></div>
-                            <div class="text-white opacity-75" style="font-size: 0.7rem;">{{ ucfirst(auth()->user()->role) }}</div>
+                            <div class="text-white small text-end">Halo, <strong>{{ auth()->user()->name }}</strong></div>
+                            <div class="text-white opacity-75 text-end" style="font-size: 0.7rem;">{{ ucfirst(auth()->user()->role) }}</div>
                         </div>
                         <form method="POST" action="{{ route('logout') }}" data-confirm="Keluar dari akun sekarang?" data-confirm-title="Konfirmasi Logout">
                             @csrf

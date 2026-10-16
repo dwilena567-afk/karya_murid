@@ -76,9 +76,9 @@
         <section class="mb-5" id="verifikasi">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold text-primary-custom m-0">
-                    <i class="bi bi-shield-check me-2"></i>Verifikasi Karya
+                    Verifikasi Karya
                 </h5>
-                <span class="badge bg-warning text-dark">{{ $karyasMenungguVerifikasi->count() }} Menunggu</span>
+                <span class="badge bg-warning text-dark">{{ $karyasMenungguVerifikasi->total() }} Menunggu</span>
             </div>
 
             <div class="card border-custom shadow-sm" style="border-radius: 12px; overflow: hidden;">
@@ -156,24 +156,94 @@
                             </tbody>
                         </table>
                     </div>
+                    @if($karyasMenungguVerifikasi->hasPages())
+                        <div class="d-flex justify-content-center p-3">
+                            {{ $karyasMenungguVerifikasi->links('pagination::bootstrap-5') }}
+                        </div>
+                    @endif
                 </div>
             </div>
         </section>
     @endif
 
     <!-- Chart Section -->
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+        <h5 class="fw-bold text-primary-custom m-0">
+            Tren Penjualan & Karya Terpopuler ({{ $durasiTren['label'] }})
+        </h5>
+        <form method="GET" action="{{ route('dashboard.index') }}" class="d-flex align-items-center gap-2">
+            <label for="periode-tren" class="form-label mb-0 text-muted small">Durasi:</label>
+            <select id="periode-tren" name="periode" class="form-select form-select-sm border-custom" onchange="this.form.submit()">
+                <option value="7_minggu" {{ $periode === '7_minggu' ? 'selected' : '' }}>7 Minggu</option>
+                <option value="1_bulan" {{ $periode === '1_bulan' ? 'selected' : '' }}>1 Bulan</option>
+                <option value="1_tahun" {{ $periode === '1_tahun' ? 'selected' : '' }}>1 Tahun</option>
+                <option value="all_time" {{ $periode === 'all_time' ? 'selected' : '' }}>All Time</option>
+            </select>
+        </form>
+    </div>
     <div class="row">
         <div class="col-12">
             <div class="card border-custom shadow-sm rounded-3">
-                <div class="card-header bg-white border-bottom border-custom p-3">
-                    <h6 class="fw-bold text-primary-custom m-0"><i class="bi bi-graph-up me-2"></i>Tren Penjualan (7 Hari Terakhir)</h6>
-                </div>
+
                 <div class="card-body p-4">
                     <!-- Kanvas untuk Chart.js -->
                     <canvas id="salesChart" height="100"></canvas>
                 </div>
             </div>
         </div>
+
+        <section class="mt-5" aria-labelledby="karya-terpopuler-title">
+            <div class="mb-3">
+                <h5 id="karya-terpopuler-title" class="fw-bold text-primary-custom m-0">
+                    Karya Paling Populer ({{ $durasiTren['label'] }})
+                </h5>
+                <p class="text-muted small mb-0 mt-1">5 karya milikmu dengan jumlah pembelian terbanyak pada durasi yang dipilih.</p>
+            </div>
+            <div class="card border-custom shadow-sm rounded-3">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead class="bg-light border-bottom border-custom">
+                            <tr>
+                                <th class="px-4 py-3 text-primary-custom">#</th>
+                                <th class="py-3 text-primary-custom">Karya</th>
+                                <th class="px-4 py-3 text-end text-primary-custom">Terjual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($karyaTerpopuler as $karya)
+                                <tr>
+                                    <td class="px-4 py-3 fw-bold text-muted">{{ $loop->iteration }}</td>
+                                    <td class="py-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            @if($karya->gambar)
+                                                <img src="{{ asset('storage/' . $karya->gambar) }}" alt=""
+                                                    class="rounded object-fit-cover border border-custom"
+                                                    style="width: 56px; height: 56px;">
+                                            @else
+                                                <div class="rounded bg-light border border-custom d-flex align-items-center justify-content-center text-muted"
+                                                    style="width: 56px; height: 56px;" aria-hidden="true">
+                                                    <i class="bi bi-image"></i>
+                                                </div>
+                                            @endif
+                                            <span class="fw-semibold text-dark">{{ $karya->judul }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-end fw-bold text-accent">
+                                        {{ number_format($karya->total_terjual) }} item
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="py-4 text-center text-muted">
+                                        Belum ada karya yang terjual pada durasi ini.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
     </div>
 </div>
 

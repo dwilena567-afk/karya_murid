@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class KaryaSeederTest extends TestCase
@@ -13,7 +14,8 @@ class KaryaSeederTest extends TestCase
     {
         $this->seed(\Database\Seeders\KaryaSeeder::class);
 
-        $this->assertDatabaseCount('karyas', 10);
+        $this->assertDatabaseCount('karyas', 23);
+        $this->assertSame(16, DB::table('karyas')->where('status_verifikasi', 'pending')->count());
         $this->assertDatabaseHas('users', [
             'email' => 'murid.demo@example.test',
             'role' => 'murid',
@@ -26,9 +28,14 @@ class KaryaSeederTest extends TestCase
             'judul' => 'Sketsa Pasar Tradisional',
             'status_verifikasi' => 'pending',
         ]);
+        $this->assertDatabaseHas('karyas', [
+            'judul' => 'Kartu Ucapan Buatan Tangan',
+            'status_verifikasi' => 'pending',
+        ]);
 
         $this->seed(\Database\Seeders\KaryaSeeder::class);
 
-        $this->assertDatabaseCount('karyas', 10);
+        $this->assertDatabaseCount('karyas', 23);
+        $this->assertSame(16, DB::table('karyas')->where('status_verifikasi', 'pending')->count());
     }
 }
