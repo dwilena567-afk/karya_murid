@@ -67,6 +67,40 @@ class StockAvailabilityTest extends TestCase
         ]);
     }
 
+    public function test_free_karya_checkout_completes_without_midtrans_and_reduces_stock(): void
+    {
+        $user = User::factory()->create();
+        $karya = $this->createKarya(stok: 3, harga: 0);
+        Keranjang::create([
+            'user_id' => $user->id,
+            'karya_id' => $karya->id,
+            'jumlah' => 2,
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('transaksi.store'))
+            ->assertRedirect(route('transaksi.show', Transaksi::first()));
+
+        $transaksi = Transaksi::firstOrFail();
+        $this->assertSame('settlement', $transaksi->transaction_status);
+        $this->assertSame('free', $transaksi->payment_type);
+        $this->assertSame(0.0, (float) $transaksi->gross_amount);
+        $this->assertNull($transaksi->snap_token);
+        $this->assertSame(1, (int) $karya->fresh()->stok);
+        $this->assertDatabaseCount('keranjangs', 0);
+        $this->assertDatabaseHas('transaksi_details', [
+            'transaksi_id' => $transaksi->id,
+            'karya_id' => $karya->id,
+            'harga_satuan' => 0,
+            'jumlah' => 2,
+        ]);
+
+        $this->get(route('transaksi.show', $transaksi))
+            ->assertOk()
+            ->assertSee('Gratis')
+            ->assertDontSee('Bayar Sekarang');
+    }
+
     public function test_pending_transaction_cannot_be_paid_when_current_stock_is_insufficient(): void
     {
         $user = User::factory()->create();
@@ -102,7 +136,42 @@ class StockAvailabilityTest extends TestCase
             ->assertDontSee('Stok karya pada transaksi ini tidak lagi mencukupi.');
     }
 
-    private function createKarya(int $stok): Karya
+    public function test_deleting_karya_cancels_pending_checkout_and_removes_payment_button(): void
+    {
+        $owner = User::factory()->create(['role' => 'murid']);
+        $buyer = User::factory()->create(['role' => 'pembeli']);
+        $karya = $this->createKarya(stok: 2);
+        $karya->update(['user_id' => $owner->id]);
+        $transaksi = $this->createTransaction($buyer, $karya, 'pending', 'snap-token', 'PENDING-DELETED-WORK');
+
+        $this->actingAs($owner)
+            ->delete(route('karyamu.destroy', $karya))
+            ->assertRedirect(route('karyamu.index'));
+
+        $transaksi->refresh();
+        $this->assertSame('cancel', $transaksi->transaction_status);
+        $this->assertSame('item_deleted', $transaksi->payment_type);
+        $this->assertDatabaseHas('transaksi_details', [
+            'transaksi_id' => $transaksi->id,
+            'karya_id' => null,
+            'harga_satuan' => 10000,
+            'jumlah' => 1,
+        ]);
+
+        $this->actingAs($buyer)
+            ->get(route('transaksi.show', $transaksi))
+            ->assertOk()
+            ->assertSee('Karya pada transaksi ini sudah dihapus. Pembayaran tidak tersedia.')
+            ->assertDontSee('Bayar Sekarang');
+
+        $this->post(route('transaksi.confirm-payment', $transaksi))
+            ->assertStatus(409)
+            ->assertJson([
+                'message' => 'Karya pada transaksi ini sudah dihapus. Pembayaran tidak tersedia.',
+            ]);
+    }
+
+    private function createKarya(int $stok, int $harga = 10000): Karya
     {
         $pembuat = User::factory()->create();
         $kategori = Kategori::create(['nama' => 'Kategori Tes']);
@@ -112,7 +181,7 @@ class StockAvailabilityTest extends TestCase
             'judul' => 'Karya Tes',
             'deskripsi' => 'Deskripsi karya tes.',
             'kategori_id' => $kategori->id,
-            'harga' => 10000,
+            'harga' => $harga,
             'stok' => $stok,
             'status_verifikasi' => 'approved',
         ]);

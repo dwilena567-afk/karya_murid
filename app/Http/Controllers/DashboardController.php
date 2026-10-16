@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Karya;
-use App\Models\Transaksi;
 use App\Models\TransaksiDetail;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -18,6 +16,14 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $karyasMenungguVerifikasi = collect();
+
+        if ($user->role === 'admin') {
+            $karyasMenungguVerifikasi = Karya::with(['pembuat', 'kategori'])
+                ->where('status_verifikasi', 'pending')
+                ->latest()
+                ->get();
+        }
 
         // Semua metrik dibatasi pada karya milik pengguna yang sedang login.
         $totalKarya = Karya::where('user_id', $user->id)->count();
@@ -63,7 +69,8 @@ class DashboardController extends Controller
             'totalTerjual',
             'totalPendapatan',
             'chartLabels',
-            'chartData'
+            'chartData',
+            'karyasMenungguVerifikasi'
         ));
         
 

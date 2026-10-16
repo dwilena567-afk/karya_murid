@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 class TransaksiController extends Controller
 {
     /**
-     * Membuat transaksi pending dari isi keranjang dan meminta Snap Token Midtrans.
+     * Membuat transaksi dari isi keranjang; transaksi berbayar meminta Snap Token Midtrans.
      * Detail transaksi disimpan sebelum keranjang dikosongkan agar isi pesanan
      * tetap tersedia untuk webhook maupun konfirmasi status pembayaran.
      */
@@ -74,6 +74,22 @@ class TransaksiController extends Controller
 
             Keranjang::where('user_id', $user->id)->delete();
 
+            if ((float) $gross_amount === 0.0) {
+                $transaksi->update([
+                    'transaction_status' => 'settlement',
+                    'payment_type' => 'free',
+                ]);
+
+                foreach ($keranjangs->groupBy('karya_id') as $karyaId => $items) {
+                    $karyas[$karyaId]->decrement('stok', $items->sum('jumlah'));
+                }
+
+                DB::commit();
+
+                return redirect()->route('transaksi.show', $transaksi)
+                    ->with('success', 'Checkout karya gratis berhasil.');
+            }
+
             $this->configureMidtrans();
 
             $params = [
@@ -110,9 +126,10 @@ class TransaksiController extends Controller
         }
         $this->refreshPendingPaymentStatus($transaksi);
         $transaksi->load(['details.karya']);
+        $hasUnavailableKarya = $this->hasUnavailableKarya($transaksi);
         $hasInsufficientStock = $this->hasInsufficientStock($transaksi);
 
-        return view('transaksi.show', compact('transaksi', 'hasInsufficientStock'));
+        return view('transaksi.show', compact('transaksi', 'hasUnavailableKarya', 'hasInsufficientStock'));
     }
 
     /** Menampilkan riwayat transaksi milik pengguna yang sedang login. */
@@ -185,6 +202,12 @@ class TransaksiController extends Controller
         // Model binding + auth check memastikan hanya pemilik transaksi yang dapat mengkonfirmasi.
         if ($transaksi->user_id !== Auth::id()) {
             abort(403, 'Unauthorized');
+        }
+
+        if ($this->hasUnavailableKarya($transaksi)) {
+            return response()->json([
+                'message' => 'Karya pada transaksi ini sudah dihapus. Pembayaran tidak tersedia.',
+            ], 409);
         }
 
         if ($this->hasInsufficientStock($transaksi)) {
@@ -293,6 +316,20 @@ class TransaksiController extends Controller
 
         DB::transaction(function () use ($orderId, $transactionStatus, $paymentType, $isSuccessful) {
             $transaksi = Transaksi::where('order_id', $orderId)->lockForUpdate()->firstOrFail();
+
+            if ($transaksi->payment_type === 'item_deleted') {
+                return;
+            }
+
+            if ($isSuccessful && $this->hasUnavailableKarya($transaksi)) {
+                $transaksi->update([
+                    'transaction_status' => 'cancel',
+                    'payment_type' => 'item_deleted',
+                ]);
+
+                return;
+            }
+
             $wasSuccessful = in_array($transaksi->transaction_status, ['settlement', 'capture'], true);
 
             // Status tetap diperbarui untuk mencatat perubahan seperti pending, deny, atau expire.
@@ -309,5 +346,12 @@ class TransaksiController extends Controller
                 }
             }
         });
+    }
+
+    private function hasUnavailableKarya(Transaksi $transaksi): bool
+    {
+        $details = $transaksi->details()->with('karya')->get();
+
+        return $details->isEmpty() || $details->contains(fn (TransaksiDetail $detail) => $detail->karya === null);
     }
 }

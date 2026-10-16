@@ -20,7 +20,7 @@
         </li>
         
         <!-- Tab Penjualan Saya -->
-        @if(auth()->user()->role === 'pembeli' || auth()->user()->role === 'admin')
+        @if(auth()->user()->role === 'murid' || auth()->user()->role === 'admin')
         <li class="nav-item" role="presentation">
             <button class="nav-link {{ $activeTab === 'penjualan' ? 'active' : '' }} fw-bold border border-custom" id="penjualan-tab" data-bs-toggle="pill" data-bs-target="#penjualan" type="button" role="tab" aria-controls="penjualan" aria-selected="{{ $activeTab === 'penjualan' ? 'true' : 'false' }}">
                 <i class="bi bi-list-check me-1"></i> Penjualan Saya
@@ -50,7 +50,7 @@
                             <thead class="bg-light border-bottom border-custom">
                                 <tr>
                                     <th class="px-4 py-3 text-primary-custom">Tanggal / Order ID</th>
-                                    <th class="py-3 text-primary-custom">Produk</th>
+                                    <th class="py-3 text-primary-custom">Karya</th>
                                     <th class="py-3 text-primary-custom">Status Pembayaran</th>
                                     <th class="py-3 text-primary-custom">Total</th>
                                     <th class="px-4 py-3 text-primary-custom">Aksi</th>
@@ -66,8 +66,8 @@
                                     <td class="py-3">
                                         @foreach($trx->details as $detail)
                                             <div class="small {{ !$loop->last ? 'mb-1' : '' }}">
-                                                <span class="fw-semibold text-dark title-clamp">{{ $detail->karya->judul ?? 'Karya Telah Dihapus' }}</span>
-                                                <span class="text-muted">{{ $detail->jumlah }} x Rp {{ number_format($detail->harga_satuan, 0, ',', '.') }}</span>
+                                                <span class="fw-semibold text-dark title-clamp">{{ $detail->karya->judul ?? 'Karya Dihapus' }}</span>
+                                                <span class="text-muted">{{ $detail->jumlah }} x {{ $detail->harga_satuan == 0 ? 'Gratis' : 'Rp ' . number_format($detail->harga_satuan, 0, ',', '.') }}</span>
                                             </div>
                                         @endforeach
                                     </td>
@@ -82,7 +82,7 @@
                                             <span class="badge bg-danger px-3 py-2 rounded-pill">Gagal</span>
                                         @endif
                                     </td>
-                                    <td class="py-3 fw-bold text-accent">Rp {{ number_format($trx->gross_amount, 0, ',', '.') }}</td>
+                                    <td class="py-3 fw-bold text-accent">{{ $trx->gross_amount == 0 ? 'Gratis' : 'Rp ' . number_format($trx->gross_amount, 0, ',', '.') }}</td>
                                     <td class="px-4 py-3">
                                         <a href="{{ route('transaksi.show', $trx->id) }}" class="btn bg-primary-custom text-white btn-sm fw-bold text-nowrap">
                                             Detail
@@ -111,7 +111,7 @@
         </div>
 
         <!-- TAB 2: PENJUALAN SAYA  -->
-        @if(auth()->user()->role === 'pembeli' || auth()->user()->role === 'admin')
+        @if(auth()->user()->role === 'murid' || auth()->user()->role === 'admin')
         <div class="tab-pane {{ $activeTab === 'penjualan' ? 'show active' : '' }}" id="penjualan" role="tabpanel" aria-labelledby="penjualan-tab">
             <div class="card border-custom shadow-sm" style="border-radius: 12px; overflow: hidden;">
                 <div class="card-body p-6">
@@ -138,7 +138,7 @@
                                                      class="rounded object-fit-cover border border-custom" style="width: 50px; height: 50px;" alt="Karya">
                                                 <div>
                                                     <h6 class="fw-bold mb-0 text-dark">{{ $jual->karya->judul ?? 'Karya Dihapus' }}</h6>
-                                                    <span class="text-muted small">{{ $jual->jumlah }} item x Rp {{ number_format($jual->harga_satuan, 0, ',', '.') }}</span>
+                                                    <span class="text-muted small">{{ $jual->jumlah }} item x {{ $jual->harga_satuan == 0 ? 'Gratis' : 'Rp ' . number_format($jual->harga_satuan, 0, ',', '.') }}</span>
                                                 </div>
                                             </div>
                                         </td>
@@ -146,7 +146,7 @@
                                             <span class="fw-medium text-dark"><i class="bi bi-person me-1"></i> {{ $jual->transaksi->user->name ?? 'Anonim' }}</span>
                                         </td>
                                         <td class="py-3 fw-bold text-accent">
-                                            Rp {{ number_format($jual->jumlah * $jual->harga_satuan, 0, ',', '.') }}
+                                            {{ $jual->harga_satuan == 0 ? 'Gratis' : 'Rp ' . number_format($jual->jumlah * $jual->harga_satuan, 0, ',', '.') }}
                                         </td>
                                         <td class="px-4 py-3">
                                             @if($jual->transaksi->transaction_status == 'settlement' || $jual->transaksi->transaction_status == 'capture')
@@ -223,7 +223,7 @@
                                             </span>
                                         </td>
                                         <td class="py-3 fw-bold text-accent">
-                                            Rp {{ number_format($global->jumlah * $global->harga_satuan, 0, ',', '.') }}
+                                            {{ $global->harga_satuan == 0 ? 'Gratis' : 'Rp ' . number_format($global->jumlah * $global->harga_satuan, 0, ',', '.') }}
                                         </td>
                                         <td class="px-4 py-3">
                                             @if($global->transaksi->transaction_status == 'settlement' || $global->transaksi->transaction_status == 'capture')

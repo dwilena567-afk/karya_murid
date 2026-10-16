@@ -41,12 +41,12 @@
                     <div class="flex-grow-1">
                         <div class="fw-bold text-dark">{{ $karya->judul ?? 'Produk' }}</div>
                         <div class="small text-muted">
-                            {{ $detail->jumlah }} x Rp {{ number_format($detail->harga_satuan, 0, ',', '.') }}
+                            {{ $detail->jumlah }} x {{ $detail->harga_satuan == 0 ? 'Gratis' : 'Rp ' . number_format($detail->harga_satuan, 0, ',', '.') }}
                         </div>
                     </div>
 
-                    <div class="fw-bold text-primary-custom">
-                        Rp {{ number_format($detail->harga_satuan * $detail->jumlah, 0, ',', '.') }}
+                    <div class="fw-bold text-accent opacity-75">
+                        {{ $detail->harga_satuan == 0 ? 'Gratis' : 'Rp ' . number_format($detail->harga_satuan * $detail->jumlah, 0, ',', '.') }}
                     </div>
                 </div>
             @endforeach
@@ -62,13 +62,17 @@
                 </div>
                 <div class="col-md-6">
                     <small class="text-muted">Total Pembayaran</small>
-                    <div class="fw-bold text-accent">Rp {{ number_format($transaksi->gross_amount, 0, ',', '.') }}</div>
+                    <div class="fw-bold text-accent">{{ $transaksi->gross_amount == 0 ? 'Gratis' : 'Rp ' . number_format($transaksi->gross_amount, 0, ',', '.') }}</div>
                 </div>
             </div>
         </div>
     </div>
 
-    @if($hasInsufficientStock && $transaksi->transaction_status === 'pending')
+    @if($transaksi->payment_type === 'item_deleted' || ($hasUnavailableKarya && $transaksi->transaction_status === 'pending'))
+        <div class="alert alert-warning mt-4 mb-0">
+            Karya pada transaksi ini sudah dihapus. Pembayaran tidak tersedia.
+        </div>
+    @elseif($hasInsufficientStock && $transaksi->transaction_status === 'pending')
         <div class="alert alert-warning mt-4 mb-0">
             Stok karya pada transaksi ini tidak lagi mencukupi. Pembayaran tidak tersedia.
         </div>
@@ -76,8 +80,8 @@
         <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('services.midtrans.client_key') }}"></script>
 
         <div class="text-center mt-4">
-            <button type="button" class="btn bg-primary-custom text-white btn-lg fw-bold px-4" onclick="bayarTransaksi()">
-                <i class="bi bi-credit-card me-2"></i> Bayar Sekarang
+            <button type="button" class="btn bg-accent btn-lg fw-bold px-4" onclick="bayarTransaksi()">
+                Bayar Sekarang
             </button>
         </div>
         <script>

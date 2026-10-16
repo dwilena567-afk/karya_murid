@@ -72,6 +72,95 @@
         </div>
     </div>
 
+    @if(auth()->user()->role === 'admin')
+        <section class="mb-5" id="verifikasi">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-primary-custom m-0">
+                    <i class="bi bi-shield-check me-2"></i>Verifikasi Karya
+                </h5>
+                <span class="badge bg-warning text-dark">{{ $karyasMenungguVerifikasi->count() }} Menunggu</span>
+            </div>
+
+            <div class="card border-custom shadow-sm" style="border-radius: 12px; overflow: hidden;">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle m-0">
+                            <thead class="bg-light border-bottom border-custom">
+                                <tr>
+                                    <th class="px-4 py-3 text-primary-custom">Gambar</th>
+                                    <th class="py-3 text-primary-custom">Detail Karya</th>
+                                    <th class="py-3 text-primary-custom">Pembuat</th>
+                                    <th class="py-3 text-primary-custom">Harga</th>
+                                    <th class="px-4 py-3 text-center text-primary-custom">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($karyasMenungguVerifikasi as $karya)
+                                    <tr>
+                                        <td class="px-4 py-3">
+                                            @if($karya->gambar)
+                                                <img src="{{ asset('storage/' . $karya->gambar) }}"
+                                                    alt="{{ $karya->judul }}"
+                                                    class="rounded object-fit-cover shadow-sm border border-custom"
+                                                    style="width: 80px; height: 80px;">
+                                            @else
+                                                <div class="rounded bg-light border border-custom d-flex align-items-center justify-content-center text-muted"
+                                                    style="width: 80px; height: 80px;" aria-label="Tidak ada gambar">
+                                                    <i class="bi bi-image fs-3"></i>
+                                                </div>
+                                            @endif
+                                        </td>
+                                        <td class="py-3">
+                                            <h6 class="fw-bold mb-1 text-dark">{{ $karya->judul }}</h6>
+                                            <span class="badge bg-secondary mb-2">{{ $karya->kategori?->nama ?? 'Umum' }}</span>
+                                        </td>
+                                        <td class="py-3">
+                                            <span class="fw-medium text-dark">
+                                                <i class="bi bi-person me-1"></i>{{ $karya->pembuat?->name ?? 'Anonim' }}
+                                            </span>
+                                        </td>
+                                        <td class="py-3 fw-bold text-accent">
+                                            {{ $karya->harga == 0 ? 'Gratis' : 'Rp ' . number_format($karya->harga, 0, ',', '.') }}
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <div class="d-flex justify-content-center gap-2">
+                                                <form action="{{ route('verifikasi.approve', $karya->id) }}" method="POST"
+                                                    data-confirm="Karya akan langsung tampil di katalog publik setelah disetujui."
+                                                    data-confirm-title="Setujui Karya">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit" class="btn btn-sm btn-success fw-bold shadow-sm" title="Setujui Karya">
+                                                        <i class="bi bi-check-lg me-1"></i> Setujui
+                                                    </button>
+                                                </form>
+                                                <form action="{{ route('verifikasi.reject', $karya->id) }}" method="POST"
+                                                    data-confirm="Karya ini tidak akan ditampilkan di katalog."
+                                                    data-confirm-title="Tolak Karya">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger fw-bold shadow-sm" title="Tolak Karya">
+                                                        <i class="bi bi-x-lg me-1"></i> Tolak
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5">
+                                            <i class="bi bi-patch-check text-muted" style="font-size: 3rem;"></i>
+                                            <h6 class="text-muted mt-3 mb-0">Tidak ada karya yang menunggu verifikasi.</h6>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    @endif
+
     <!-- Chart Section -->
     <div class="row">
         <div class="col-12">

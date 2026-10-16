@@ -70,8 +70,8 @@
         .nav-link-custom {
             display: flex;
             align-items: center;
-            width: 100%;
-            padding: 0.7rem 0.8rem;
+            width: auto;
+            padding: 0.6rem 0.8rem;
             border-radius: 0.375rem;
             color: var(--alice-blue);
             text-decoration: none;
@@ -86,36 +86,13 @@
             color: white;
         }
 
-        .app-sidebar {
-            width: 240px;
-            flex: 0 0 240px;
-            min-height: 100vh;
-            background-color: var(--steel-azure);
-        }
-
         .app-page {
             min-width: 0;
         }
 
-        @media (max-width: 767.98px) {
-            body {
-                flex-direction: column;
-            }
-
-            .app-sidebar {
-                width: 100%;
-                flex: 0 0 auto;
-                min-height: 0;
-            }
-
-            .app-nav-links {
-                flex-direction: row !important;
-                flex-wrap: wrap;
-            }
-
+        @media (max-width: 991.98px) {
             .nav-link-custom {
-                width: auto;
-                flex: 1 1 auto;
+                width: 100%;
             }
 
             .app-account {
@@ -243,56 +220,62 @@
     </style>
 </head>
 
-<body class="d-flex min-vh-100">
+<body class="d-flex flex-column min-vh-100">
 
-    <aside class="app-sidebar d-flex flex-column p-3 shadow-sm">
-        <a href="{{ route('beranda.index') }}" class="text-white text-decoration-none fw-bold fs-5 mb-4 px-2">
-            <i class="bi bi-palette me-2"></i>Karya Murid
-        </a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary-custom shadow-sm">
+        <div class="container-fluid px-3 px-lg-4">
+            <a href="{{ route('beranda.index') }}" class="navbar-brand fw-bold">
+                <i class="bi bi-palette me-2"></i>Karya Murid
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-navbar"
+                aria-controls="main-navbar" aria-expanded="false" aria-label="Buka navigasi">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-        <nav class="app-nav-links d-flex flex-column gap-1">
-            <a href="{{ route('beranda.index') }}" class="nav-link-custom {{ request()->routeIs('beranda.*') ? 'active' : '' }}">
-                <i class="bi bi-house-door me-2"></i>Beranda
-            </a>
-            <a href="{{ route('katalog.index') }}" class="nav-link-custom {{ request()->routeIs('katalog.*') ? 'active' : '' }}">
-                <i class="bi bi-grid me-2"></i>Katalog
-            </a>
-            @auth
-                <a href="{{ route('keranjang.index') }}" class="nav-link-custom {{ request()->routeIs('keranjang.*') ? 'active' : '' }}">
-                    <i class="bi bi-cart3 me-2"></i>Keranjang
-                </a>
-                <a href="{{ route('transaksi.index') }}" class="nav-link-custom {{ request()->routeIs('transaksi.*') ? 'active' : '' }}">
-                    <i class="bi bi-arrow-left-right me-2"></i>Transaksi
-                </a>
-                <a href="{{ route('karyamu.index') }}" class="nav-link-custom {{ request()->routeIs('karyamu.*') ? 'active' : '' }}">
-                    <i class="bi bi-palette me-2"></i>Karyamu
-                </a>
-                <a href="{{ route('dashboard.index') }}" class="nav-link-custom {{ request()->routeIs('dashboard.*') ? 'active' : '' }}">
-                    <i class="bi bi-speedometer2 me-2"></i>Dashboard
-                </a>
-                @if(auth()->user()->role === 'admin')
-                    <a href="{{ route('verifikasi.index') }}" class="nav-link-custom {{ request()->routeIs('verifikasi.*') ? 'active' : '' }}">
-                        <i class="bi bi-shield-check me-2"></i>Verifikasi
+            <div class="collapse navbar-collapse" id="main-navbar">
+                <div class="navbar-nav me-auto mb-2 mb-lg-0 app-nav-links">
+                    <a href="{{ route('beranda.index') }}" class="nav-link-custom {{ request()->routeIs('beranda.*') ? 'active' : '' }}">
+                        <i class="bi bi-house-door me-2"></i>Beranda
                     </a>
-                @endif
-            @endauth
-        </nav>
-
-        <div class="app-account mt-auto pt-4">
-            @auth
-                <div class="text-white small mb-2 px-2">Halo, <strong>{{ auth()->user()->name }}</strong></div>
-                <form method="POST" action="{{ route('logout') }}" class="px-2" data-confirm="Keluar dari akun sekarang?" data-confirm-title="Konfirmasi Logout">
-                    @csrf
-                    <button type="submit" class="btn btn-outline-light btn-sm w-100">Logout</button>
-                </form>
-            @else
-                <div class="d-flex flex-column gap-2 px-2">
-                    <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm fw-bold">Sign In</a>
-                    <a href="{{ route('register') }}" class="btn bg-accent btn-sm fw-bold">Sign Up</a>
+                    <a href="{{ route('katalog.index') }}" class="nav-link-custom {{ request()->routeIs('katalog.*') ? 'active' : '' }}">
+                        <i class="bi bi-grid me-2"></i>Katalog
+                    </a>
+                    @auth
+                        <a href="{{ route('keranjang.index') }}" class="nav-link-custom {{ request()->routeIs('keranjang.*') ? 'active' : '' }}">
+                            <i class="bi bi-cart3 me-2"></i>Keranjang
+                        </a>
+                        <a href="{{ route('transaksi.index') }}" class="nav-link-custom {{ request()->routeIs('transaksi.*') ? 'active' : '' }}">
+                            <i class="bi bi-arrow-left-right me-2"></i>Transaksi
+                        </a>
+                        @if(in_array(auth()->user()->role, ['murid', 'admin'], true))
+                            <a href="{{ route('karyamu.index') }}" class="nav-link-custom {{ request()->routeIs('karyamu.*') ? 'active' : '' }}">
+                                <i class="bi bi-palette me-2"></i>Karyamu
+                            </a>
+                            <a href="{{ route('dashboard.index') }}" class="nav-link-custom {{ request()->routeIs('dashboard.*') ? 'active' : '' }}">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                            </a>
+                        @endif
+                    @endauth
                 </div>
-            @endauth
+
+                <div class="app-account d-flex flex-column flex-lg-row align-items-lg-center gap-2">
+                    @auth
+                        <div class="px-2">
+                            <div class="text-white small">Halo, <strong>{{ auth()->user()->name }}</strong></div>
+                            <div class="text-white opacity-75" style="font-size: 0.7rem;">{{ ucfirst(auth()->user()->role) }}</div>
+                        </div>
+                        <form method="POST" action="{{ route('logout') }}" data-confirm="Keluar dari akun sekarang?" data-confirm-title="Konfirmasi Logout">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+                        </form>
+                    @else
+                        <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm fw-bold">Sign In</a>
+                        <a href="{{ route('register') }}" class="btn bg-accent btn-sm fw-bold">Sign Up</a>
+                    @endauth
+                </div>
+            </div>
         </div>
-    </aside>
+    </nav>
 
     <div class="app-page flex-grow-1 d-flex flex-column min-vh-100">
     <!-- Content Wrapper -->
@@ -409,13 +392,18 @@
 
         document.addEventListener('submit', function (event) {
             const form = event.target;
-            if (!form.matches('form[data-confirm]') || form.dataset.confirmed === 'true') return;
+            const priceInput = form.matches('form[data-confirm-price-zero]') ? form.querySelector('[name="harga"]') : null;
+            const isFreePrice = priceInput && Number(priceInput.value) === 0;
+            const hasStandardConfirmation = form.matches('form[data-confirm]');
+            if (!hasStandardConfirmation && !isFreePrice) return;
+            if (form.dataset.confirmed === 'true'
+                && (!isFreePrice || form.dataset.confirmedPrice === priceInput.value)) return;
 
             event.preventDefault();
             Swal.fire({
                 icon: 'warning',
-                title: form.dataset.confirmTitle || 'Konfirmasi',
-                text: form.dataset.confirm,
+                title: isFreePrice ? 'Konfirmasi Harga Gratis' : (form.dataset.confirmTitle || 'Konfirmasi'),
+                text: isFreePrice ? form.dataset.confirmPriceZero : form.dataset.confirm,
                 showCancelButton: true,
                 confirmButtonText: 'Ya, lanjutkan',
                 cancelButtonText: 'Batal',
@@ -424,6 +412,9 @@
             }).then(function (result) {
                 if (result.isConfirmed) {
                     form.dataset.confirmed = 'true';
+                    if (isFreePrice) {
+                        form.dataset.confirmedPrice = priceInput.value;
+                    }
                     form.requestSubmit();
                 }
             });

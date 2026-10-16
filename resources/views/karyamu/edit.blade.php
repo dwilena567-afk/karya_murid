@@ -16,13 +16,14 @@
 
     <div class="card border-custom shadow-sm" style="border-radius: 10px;">
         <div class="card-body p-4">
-            <form action="{{ route('karyamu.update', $karya->id) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('karyamu.update', $karya->id) }}" method="POST" enctype="multipart/form-data"
+                data-confirm-price-zero="Harga Rp0 berarti karya ini akan ditandai sebagai gratis. Apakah Anda ingin melanjutkan?">
                 @csrf
                 @method('PUT')
                 <div class="row g-3">
                     <div class="col-md-8">
                         <label class="form-label fw-bold">Judul Karya</label>
-                        <input type="text" name="judul" class="form-control border-custom" value="{{ old('judul', $karya->judul) }}" required>
+                        <input type="text" name="judul" class="form-control border-custom" value="{{ old('judul', $karya->judul) }}" maxlength="30" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-bold">Kategori</label>

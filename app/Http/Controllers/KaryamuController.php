@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Karya;
 use App\Models\Kategori;
+use App\Models\Transaksi;
+use App\Models\TransaksiDetail;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -67,7 +71,7 @@ class KaryamuController extends Controller
         }
 
         $request->validate([
-            'judul' => 'required|string|max:255',
+            'judul' => 'required|string|max:50',
             'deskripsi' => 'required|string',
             'kategori_id' => 'required|exists:kategoris,id',
             'harga' => 'required|numeric|min:0',
@@ -112,7 +116,7 @@ class KaryamuController extends Controller
         }
 
         $request->validate([
-            'judul' => 'required|string|max:255',
+            'judul' => 'required|string|max:30',
             'deskripsi' => 'required|string',
             'kategori_id' => 'required|exists:kategoris,id',
             'harga' => 'required|numeric|min:0',
@@ -150,12 +154,40 @@ class KaryamuController extends Controller
         // Cari berdasarkan user_id agar endpoint hapus tidak dapat dipakai lintas akun.
         $karya = Karya::where('user_id', Auth::id())->findOrFail($id);
 
-        // Hapus file fisik sebelum record database agar tidak meninggalkan file yatim.
-        if ($karya->gambar) {
-            Storage::disk('public')->delete($karya->gambar);
-        }
+        DB::transaction(function () use ($karya) {
+            $pendingTransactionIds = TransaksiDetail::where('karya_id', $karya->id)
+                ->whereHas('transaksi', fn ($query) => $query->where('transaction_status', 'pending'))
+                ->pluck('transaksi_id')
+                ->unique();
 
-        $karya->delete();
+            $pendingTransactions = Transaksi::whereIn('id', $pendingTransactionIds)
+                ->lockForUpdate()
+                ->get()
+                ->where('transaction_status', 'pending');
+
+            foreach ($pendingTransactions as $transaksi) {
+                $transaksi->update([
+                    'transaction_status' => 'cancel',
+                    'payment_type' => 'item_deleted',
+                ]);
+            }
+
+            // Nullify transaction detail references so purchase history and totals remain intact.
+            $karya->delete();
+        });
+
+        // Remove the image only after the database changes have completed.
+        if ($karya->gambar && !Storage::disk('public')->delete($karya->gambar)) {
+            Log::error('Gagal menghapus gambar karya setelah karya dihapus.', [
+                'karya_id' => $id,
+                'gambar' => $karya->gambar,
+            ]);
+
+            return redirect()->route('karyamu.index')->with(
+                'error',
+                'Karya berhasil dihapus, tetapi gambar di penyimpanan gagal dihapus.'
+            );
+        }
 
         return redirect()->route('karyamu.index')->with('success', 'Karya berhasil dihapus');
     }

@@ -45,13 +45,13 @@
                                 {{ $item->karya->pembuat?->name ?? 'Siswa' }}
                             </p>
                             <p class="mb-0 text-muted" style="font-size: 0.85rem;">
-                                Rp{{ number_format($item->karya->harga, 0, ',', '.') }} <span class="mx-1">x</span> {{ $item->jumlah }} item
+                                {{ $item->karya->harga == 0 ? 'Gratis' : 'Rp' . number_format($item->karya->harga, 0, ',', '.') }} <span class="mx-1">x</span> {{ $item->jumlah }} item
                             </p>
                         </div>
                         
                         <!-- Harga dan Aksi -->
                         <div class="text-center text-md-end mt-3 mt-md-0 ms-md-auto w-100" style="min-width: 150px;">
-                            <h5 class="fw-bold text-accent mb-3">Rp{{ number_format($subtotal, 0, ',', '.') }}</h5>
+                            <h5 class="fw-bold text-accent mb-3">{{ $subtotal == 0 ? 'Gratis' : 'Rp' . number_format($subtotal, 0, ',', '.') }}</h5>
                             
                             <!-- Tombol Hapus Terhubung dengan Controller -->
                             <form action="{{ route('keranjang.destroy', $item->id) }}" method="POST" data-confirm="Hapus karya ini dari keranjang?" data-confirm-title="Hapus dari Keranjang">
@@ -83,7 +83,7 @@
                     
                     <div class="d-flex justify-content-between mb-4 mt-3 pt-3 border-top border-custom">
                         <span class="fw-bold text-dark">Total Harga</span>
-                        <span class="fw-bold text-accent fs-5">Rp{{ number_format($totalHarga, 0, ',', '.') }}</span>
+                        <span class="fw-bold text-accent fs-5">{{ $totalHarga == 0 ? 'Gratis' : 'Rp' . number_format($totalHarga, 0, ',', '.') }}</span>
                     </div>
 
                     <!-- Form Checkout Terhubung dengan TransaksiController -->

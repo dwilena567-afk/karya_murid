@@ -46,7 +46,7 @@
                                     <span class="fw-medium text-dark"><i class="bi bi-person me-1"></i> {{ $karya->pembuat?->name ?? 'Anonim' }}</span>
                                 </td>
                                 <td class="py-3 fw-bold text-accent">
-                                    Rp {{ number_format($karya->harga, 0, ',', '.') }}
+                                    {{ $karya->harga == 0 ? 'Gratis' : 'Rp ' . number_format($karya->harga, 0, ',', '.') }}
                                 </td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="d-flex justify-content-center gap-2">
