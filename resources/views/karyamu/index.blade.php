@@ -23,7 +23,7 @@
             <!-- Gambar Produk -->
             <div class="position-relative">
                 <img src="{{ $karya->gambar ? asset('storage/'.$karya->gambar) : 'https://via.placeholder.com/400x300' }}" 
-                     class="w-100 object-fit-cover" style="height: 200px;" alt="{{ $karya->judul }}">
+                     class="w-100 object-fit-cover " style="height: 200px;" alt="{{ $karya->judul }}">
                 
                 <!-- Lencana Kategori-->
                 <span class="badge badge-category position-absolute top-0 end-0 m-2 px-2 py-1 shadow-sm">

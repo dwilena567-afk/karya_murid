@@ -172,11 +172,11 @@ class KaryamuController extends Controller
                 ]);
             }
 
-            // Nullify transaction detail references so purchase history and totals remain intact.
+         
             $karya->delete();
         });
 
-        // Remove the image only after the database changes have completed.
+      
         if ($karya->gambar && !Storage::disk('public')->delete($karya->gambar)) {
             Log::error('Gagal menghapus gambar karya setelah karya dihapus.', [
                 'karya_id' => $id,

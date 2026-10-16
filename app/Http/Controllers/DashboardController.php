@@ -18,14 +18,19 @@ class DashboardController extends Controller
     {
         $validated = $request->validate([
             'periode' => ['sometimes', 'in:7_minggu,1_bulan,1_tahun,all_time'],
+            'periode_populer' => ['sometimes', 'in:7_minggu,1_bulan,1_tahun,all_time'],
         ]);
         $periode = $validated['periode'] ?? '7_minggu';
-        $durasiTren = [
-            '7_minggu' => ['label' => '7 Minggu Terakhir', 'mulai' => now()->subWeeks(7)],
-            '1_bulan' => ['label' => '1 Bulan Terakhir', 'mulai' => now()->subMonth()],
-            '1_tahun' => ['label' => '1 Tahun Terakhir', 'mulai' => now()->subYear()],
+        $periodePopuler = $validated['periode_populer'] ?? '7_minggu';
+        $akhirPeriode = now();
+        $durasi = [
+            '7_minggu' => ['label' => '7 Minggu Terakhir', 'mulai' => $akhirPeriode->copy()->subWeeks(7)],
+            '1_bulan' => ['label' => '1 Bulan Terakhir', 'mulai' => $akhirPeriode->copy()->subMonth()],
+            '1_tahun' => ['label' => '1 Tahun Terakhir', 'mulai' => $akhirPeriode->copy()->subYear()],
             'all_time' => ['label' => 'Sepanjang Waktu', 'mulai' => null],
-        ][$periode];
+        ];
+        $durasiTren = $durasi[$periode] + ['sampai' => $akhirPeriode];
+        $durasiPopuler = $durasi[$periodePopuler] + ['sampai' => $akhirPeriode];
 
         $user = Auth::user();
         $karyasMenungguVerifikasi = collect();
@@ -90,7 +95,7 @@ class DashboardController extends Controller
             ->join('transaksis', 'transaksi_details.transaksi_id', '=', 'transaksis.id')
             ->where('karyas.user_id', $user->id)
             ->whereIn('transaksis.transaction_status', ['settlement', 'capture'])
-            ->when($durasiTren['mulai'], function ($query, $mulai) {
+            ->when($durasiPopuler['mulai'], function ($query, $mulai) {
                 $query->where('transaksi_details.created_at', '>=', $mulai);
             })
             ->groupBy('karyas.id', 'karyas.judul', 'karyas.gambar')
@@ -108,7 +113,9 @@ class DashboardController extends Controller
             'karyaTerpopuler',
             'karyasMenungguVerifikasi',
             'periode',
-            'durasiTren'
+            'periodePopuler',
+            'durasiTren',
+            'durasiPopuler'
         ));
         
 

@@ -15,7 +15,7 @@ class DashboardPopularKaryaTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_dashboard_lists_the_users_most_purchased_karya_for_the_selected_period(): void
+    public function test_popular_karya_period_is_independent_from_the_sales_trend_period(): void
     {
         $owner = User::factory()->create(['role' => 'murid']);
         $buyer = User::factory()->create(['role' => 'pembeli']);
@@ -34,6 +34,7 @@ class DashboardPopularKaryaTest extends TestCase
         $this->actingAs($owner)
             ->get(route('dashboard.index'))
             ->assertOk()
+            ->assertSee('Tren Penjualan (7 Minggu Terakhir)')
             ->assertSee('Karya Paling Populer (7 Minggu Terakhir)')
             ->assertSeeInOrder(['Karya Terlaris', 'Karya Kedua'])
             ->assertDontSee('Karya Lama')
@@ -42,8 +43,34 @@ class DashboardPopularKaryaTest extends TestCase
 
         $this->get(route('dashboard.index', ['periode' => 'all_time']))
             ->assertOk()
+            ->assertSee('Tren Penjualan (Sepanjang Waktu)')
+            ->assertSee('Karya Paling Populer (7 Minggu Terakhir)')
+            ->assertDontSee('Karya Lama');
+
+        $this->get(route('dashboard.index', ['periode_populer' => 'all_time']))
+            ->assertOk()
+            ->assertSee('Tren Penjualan (7 Minggu Terakhir)')
             ->assertSee('Karya Paling Populer (Sepanjang Waktu)')
             ->assertSeeInOrder(['Karya Lama', 'Karya Terlaris']);
+
+        $this->get(route('dashboard.index', ['periode' => 'all_time', 'periode_populer' => '1_bulan']))
+            ->assertOk()
+            ->assertSee(route('dashboard.index', ['periode' => '7_minggu', 'periode_populer' => '1_bulan']))
+            ->assertSee(route('dashboard.index', ['periode' => 'all_time', 'periode_populer' => '7_minggu']))
+            ->assertSee('Rentang tanggal:');
+    }
+
+    public function test_dashboard_shows_helpful_actions_when_there_are_no_sales(): void
+    {
+        $owner = User::factory()->create(['role' => 'murid']);
+
+        $this->actingAs($owner)
+            ->get(route('dashboard.index'))
+            ->assertOk()
+            ->assertSee('Belum ada penjualan pada rentang tanggal ini.')
+            ->assertSee('Belum ada karya terjual pada rentang tanggal ini.')
+            ->assertSee('Coba rentang tanggal lain, atau kelola dan promosikan karyamu agar mulai ditemukan pembeli.')
+            ->assertSee(route('karyamu.index'));
     }
 
     private function createKarya(User $owner, string $judul): Karya

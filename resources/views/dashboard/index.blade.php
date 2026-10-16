@@ -169,9 +169,10 @@
     <!-- Chart Section -->
     <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
         <h5 class="fw-bold text-primary-custom m-0">
-            Tren Penjualan & Karya Terpopuler ({{ $durasiTren['label'] }})
+            Tren Penjualan ({{ $durasiTren['label'] }})
         </h5>
         <form method="GET" action="{{ route('dashboard.index') }}" class="d-flex align-items-center gap-2">
+            <input type="hidden" name="periode_populer" value="{{ $periodePopuler }}">
             <label for="periode-tren" class="form-label mb-0 text-muted small">Durasi:</label>
             <select id="periode-tren" name="periode" class="form-select form-select-sm border-custom" onchange="this.form.submit()">
                 <option value="7_minggu" {{ $periode === '7_minggu' ? 'selected' : '' }}>7 Minggu</option>
@@ -179,32 +180,62 @@
                 <option value="1_tahun" {{ $periode === '1_tahun' ? 'selected' : '' }}>1 Tahun</option>
                 <option value="all_time" {{ $periode === 'all_time' ? 'selected' : '' }}>All Time</option>
             </select>
+            @if($periode !== '7_minggu')
+                <a href="{{ route('dashboard.index', ['periode' => '7_minggu', 'periode_populer' => $periodePopuler]) }}" class="small text-nowrap">Reset</a>
+            @endif
         </form>
     </div>
+    <p class="text-muted small mb-3">
+        Rentang tanggal:
+        {{ $durasiTren['mulai'] ? $durasiTren['mulai']->format('d/m/Y') . ' – ' . $durasiTren['sampai']->format('d/m/Y') : 'Semua tanggal' }}
+    </p>
     <div class="row">
         <div class="col-12">
             <div class="card border-custom shadow-sm rounded-3">
 
                 <div class="card-body p-4">
-                    <!-- Kanvas untuk Chart.js -->
-                    <canvas id="salesChart" height="100"></canvas>
+                    @if(count($chartLabels))
+                        <canvas id="salesChart" height="100"></canvas>
+                    @else
+                        <div class="py-4 text-center" role="status">
+                            <p class="fw-semibold mb-1">Belum ada penjualan pada rentang tanggal ini.</p>
+                            <p class="text-muted small mb-3">Coba rentang tanggal lain, atau kelola dan promosikan karyamu agar mulai ditemukan pembeli.</p>
+                            <a href="{{ route('karyamu.index') }}" class="btn btn-sm bg-primary-custom text-white fw-bold px-3">Kelola Karyamu</a>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
 
         <section class="mt-5" aria-labelledby="karya-terpopuler-title">
-            <div class="mb-3">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
                 <h5 id="karya-terpopuler-title" class="fw-bold text-primary-custom m-0">
-                    Karya Paling Populer ({{ $durasiTren['label'] }})
+                    Karya Paling Populer ({{ $durasiPopuler['label'] }})
                 </h5>
-                <p class="text-muted small mb-0 mt-1">5 karya milikmu dengan jumlah pembelian terbanyak pada durasi yang dipilih.</p>
+                <form method="GET" action="{{ route('dashboard.index') }}" class="d-flex align-items-center gap-2">
+                    <input type="hidden" name="periode" value="{{ $periode }}">
+                    <label for="periode-populer" class="form-label mb-0 text-muted small">Durasi:</label>
+                    <select id="periode-populer" name="periode_populer" class="form-select form-select-sm border-custom" onchange="this.form.submit()">
+                        <option value="7_minggu" {{ $periodePopuler === '7_minggu' ? 'selected' : '' }}>7 Minggu</option>
+                        <option value="1_bulan" {{ $periodePopuler === '1_bulan' ? 'selected' : '' }}>1 Bulan</option>
+                        <option value="1_tahun" {{ $periodePopuler === '1_tahun' ? 'selected' : '' }}>1 Tahun</option>
+                        <option value="all_time" {{ $periodePopuler === 'all_time' ? 'selected' : '' }}>All Time</option>
+                    </select>
+                    @if($periodePopuler !== '7_minggu')
+                        <a href="{{ route('dashboard.index', ['periode' => $periode, 'periode_populer' => '7_minggu']) }}" class="small text-nowrap">Reset</a>
+                    @endif
+                </form>
             </div>
+            <p class="text-muted small mb-3">
+                Rentang tanggal:
+                {{ $durasiPopuler['mulai'] ? $durasiPopuler['mulai']->format('d/m/Y') . ' – ' . $durasiPopuler['sampai']->format('d/m/Y') : 'Semua tanggal' }}
+            </p>
             <div class="card border-custom shadow-sm rounded-3">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle m-0">
                         <thead class="bg-light border-bottom border-custom">
                             <tr>
-                                <th class="px-4 py-3 text-primary-custom">#</th>
+                                <th class="px-4 py-3 text-primary-custom">No</th>
                                 <th class="py-3 text-primary-custom">Karya</th>
                                 <th class="px-4 py-3 text-end text-primary-custom">Terjual</th>
                             </tr>
@@ -234,8 +265,10 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3" class="py-4 text-center text-muted">
-                                        Belum ada karya yang terjual pada durasi ini.
+                                    <td colspan="3" class="py-4 text-center" role="status">
+                                        <p class="fw-semibold mb-1">Belum ada karya terjual pada rentang tanggal ini.</p>
+                                        <p class="text-muted small mb-3">Coba rentang tanggal lain, atau kelola dan promosikan karyamu agar mulai ditemukan pembeli.</p>
+                                        <a href="{{ route('karyamu.index') }}" class="btn btn-sm bg-primary-custom text-white fw-bold px-3">Kelola Karyamu</a>
                                     </td>
                                 </tr>
                             @endforelse
@@ -272,8 +305,13 @@
         // Menerima data dari Controller
         const labels = {!! json_encode($chartLabels) !!};
         const dataValues = {!! json_encode($chartData) !!};
+        const canvas = document.getElementById('salesChart');
 
-        const ctx = document.getElementById('salesChart').getContext('2d');
+        if (!canvas || labels.length === 0) {
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
         
         // Membangun Grafik Garis
         new Chart(ctx, {

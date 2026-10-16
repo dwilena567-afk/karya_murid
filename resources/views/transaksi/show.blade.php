@@ -35,7 +35,7 @@
                 <div class="d-flex align-items-center gap-3 border-bottom p-3">
                     <img src="{{ $karya && $karya->gambar ? asset('storage/' . $karya->gambar) : 'https://via.placeholder.com/150x150' }}"
                          alt="{{ $karya->judul ?? 'Produk' }}"
-                         class="img-fluid rounded"
+                         class="img-fluid rounded shadow-sm border border-custom"
                          style="width: 90px; height: 90px; object-fit: cover;">
 
                     <div class="flex-grow-1">
