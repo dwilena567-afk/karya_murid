@@ -13,7 +13,7 @@
 
 
 
-<!-- Grid Bootstrap seperti di Katalog -->
+
 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
     
     @forelse($karyas as $karya)
@@ -23,9 +23,9 @@
             <!-- Gambar Produk -->
             <div class="position-relative">
                 <img src="{{ $karya->gambar ? asset('storage/'.$karya->gambar) : 'https://via.placeholder.com/400x300' }}" 
-                     class="w-100 object-fit-cover" style="height: 200px;" alt="{{ $karya->judul }}">
+                     class="w-100 object-fit-cover " style="height: 200px;" alt="{{ $karya->judul }}">
                 
-                <!-- Lencana Kategori (Dilengkapi Nullsafe Operator) -->
+                <!-- Lencana Kategori-->
                 <span class="badge badge-category position-absolute top-0 end-0 m-2 px-2 py-1 shadow-sm">
                     {{ ucfirst($karya->kategori?->nama ?? 'Umum') }}
                 </span>
@@ -45,7 +45,7 @@
                 <h6 class="fw-bold text-primary-custom mb-1 title-clamp" style="line-height: 1.3;" title="{{ $karya->judul }}">{{ $karya->judul }}</h6>
                 
                 <div class="mt-auto pt-2 border-top border-custom d-flex justify-content-between align-items-center mb-3">
-                    <span class="fw-bold text-accent fs-6">Rp{{ number_format($karya->harga, 0, ',', '.') }}</span>
+                    <span class="fw-bold text-accent fs-6">{{ $karya->harga == 0 ? 'Gratis' : 'Rp' . number_format($karya->harga, 0, ',', '.') }}</span>
                      @if ($karya->stok > 0)
                     <small class="text-muted" style="font-size: 0.75rem;">Stok: {{ $karya->stok }}</small>
                     @else

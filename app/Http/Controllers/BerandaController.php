@@ -9,7 +9,7 @@ class BerandaController extends Controller
     public function index()
     {
         // Beranda hanya menampilkan karya approved dan membatasi jumlah agar halaman tetap ringkas.
-        $karyasTerbaru = Karya::with('pembuat')
+        $karyasTerbaru = Karya::with(['pembuat', 'kategori'])
             ->where('status_verifikasi', 'approved')
             ->latest()
             ->take(4)

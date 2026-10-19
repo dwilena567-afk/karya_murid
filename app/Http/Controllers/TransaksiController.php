@@ -1,17 +1,18 @@
 <?php
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Karya;
 use App\Models\Keranjang;
 use App\Models\Transaksi;
 use App\Models\TransaksiDetail;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class TransaksiController extends Controller
 {
     /**
-     * Membuat transaksi pending dari isi keranjang dan meminta Snap Token Midtrans.
+     * Membuat transaksi dari isi keranjang; transaksi berbayar meminta Snap Token Midtrans.
      * Detail transaksi disimpan sebelum keranjang dikosongkan agar isi pesanan
      * tetap tersedia untuk webhook maupun konfirmasi status pembayaran.
      */
@@ -19,8 +20,7 @@ class TransaksiController extends Controller
     {
         $user = Auth::user();
 
-        // Eager loading karya mencegah query tambahan saat menghitung total dan menyimpan detail.
-        $keranjangs = Keranjang::with('karya')->where('user_id', $user->id)->get();
+        $keranjangs = Keranjang::where('user_id', $user->id)->get();
 
         if ($keranjangs->isEmpty()) {
             return redirect()->back()->with('error', 'Keranjang belanja Anda masih kosong.');
@@ -28,10 +28,31 @@ class TransaksiController extends Controller
 
         DB::beginTransaction();
         try {
-            // Total dihitung dari harga saat checkout; detail di bawah menyimpan snapshot yang sama.
+            // Lock products before cart rows, matching the add-to-cart lock order.
+            $karyas = Karya::whereIn('id', $keranjangs->pluck('karya_id')->unique())
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+            $keranjangs = Keranjang::where('user_id', $user->id)->lockForUpdate()->get();
+
+            foreach ($keranjangs->groupBy('karya_id') as $karyaId => $items) {
+                $karya = $karyas->get($karyaId);
+                $jumlahDiKeranjang = $items->sum('jumlah');
+
+                if (!$karya || $jumlahDiKeranjang > $karya->stok) {
+                    $judul = $karya?->judul ?? 'Karya';
+                    $stok = $karya?->stok ?? 0;
+                    throw new \RuntimeException(
+                        "Stok {$judul} tidak mencukupi. Stok tersedia: {$stok}, jumlah di keranjang: {$jumlahDiKeranjang}."
+                    );
+                }
+            }
+
+            // Total dihitung dari harga saat checkout; detail menyimpan snapshot yang sama.
             $gross_amount = 0;
             foreach ($keranjangs as $item) {
-                $gross_amount += $item->karya->harga * $item->jumlah;
+                $gross_amount += $karyas[$item->karya_id]->harga * $item->jumlah;
             }
 
             // Simpan snapshot harga dan jumlah saat checkout; harga katalog dapat berubah setelahnya.
@@ -42,16 +63,32 @@ class TransaksiController extends Controller
                 'transaction_status' => 'pending',
             ]);
 
-            foreach ($keranjangs as $item) {
+            foreach ($keranjangs->groupBy('karya_id') as $karyaId => $items) {
                 TransaksiDetail::create([
                     'transaksi_id' => $transaksi->id,
-                    'karya_id' => $item->karya_id,
-                    'harga_satuan' => $item->karya->harga,
-                    'jumlah' => $item->jumlah
+                    'karya_id' => $karyaId,
+                    'harga_satuan' => $karyas[$karyaId]->harga,
+                    'jumlah' => $items->sum('jumlah'),
                 ]);
             }
 
             Keranjang::where('user_id', $user->id)->delete();
+
+            if ((float) $gross_amount === 0.0) {
+                $transaksi->update([
+                    'transaction_status' => 'settlement',
+                    'payment_type' => 'free',
+                ]);
+
+                foreach ($keranjangs->groupBy('karya_id') as $karyaId => $items) {
+                    $karyas[$karyaId]->decrement('stok', $items->sum('jumlah'));
+                }
+
+                DB::commit();
+
+                return redirect()->route('transaksi.show', $transaksi)
+                    ->with('success', 'Checkout karya gratis berhasil.');
+            }
 
             $this->configureMidtrans();
 
@@ -89,8 +126,10 @@ class TransaksiController extends Controller
         }
         $this->refreshPendingPaymentStatus($transaksi);
         $transaksi->load(['details.karya']);
+        $hasUnavailableKarya = $this->hasUnavailableKarya($transaksi);
+        $hasInsufficientStock = $this->hasInsufficientStock($transaksi);
 
-        return view('transaksi.show', compact('transaksi'));
+        return view('transaksi.show', compact('transaksi', 'hasUnavailableKarya', 'hasInsufficientStock'));
     }
 
     /** Menampilkan riwayat transaksi milik pengguna yang sedang login. */
@@ -165,6 +204,18 @@ class TransaksiController extends Controller
             abort(403, 'Unauthorized');
         }
 
+        if ($this->hasUnavailableKarya($transaksi)) {
+            return response()->json([
+                'message' => 'Karya pada transaksi ini sudah dihapus. Pembayaran tidak tersedia.',
+            ], 409);
+        }
+
+        if ($this->hasInsufficientStock($transaksi)) {
+            return response()->json([
+                'message' => 'Stok karya pada transaksi ini tidak lagi mencukupi.',
+            ], 409);
+        }
+
         $this->configureMidtrans();
         $status = \Midtrans\Transaction::status($transaksi->order_id);
         $statusOrderId = data_get($status, 'order_id');
@@ -189,13 +240,45 @@ class TransaksiController extends Controller
         ]);
     }
 
+    private function hasInsufficientStock(Transaksi $transaksi): bool
+    {
+        $jumlahPerKarya = TransaksiDetail::where('transaksi_id', $transaksi->id)
+            ->select('karya_id')
+            ->selectRaw('SUM(jumlah) as jumlah')
+            ->groupBy('karya_id')
+            ->get();
+
+        if ($jumlahPerKarya->isEmpty()) {
+            return false;
+        }
+
+        $stokPerKarya = Karya::whereIn('id', $jumlahPerKarya->pluck('karya_id'))
+            ->pluck('stok', 'id');
+
+        foreach ($jumlahPerKarya as $item) {
+            if (!isset($stokPerKarya[$item->karya_id]) || $stokPerKarya[$item->karya_id] < $item->jumlah) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function configureMidtrans(): void
     {
         // Konfigurasi harus di-set pada setiap request karena PHP tidak menyimpan state antar-request.
         \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
-        \Midtrans\Config::$isProduction = config('services.midtrans.is_production', false);
-        \Midtrans\Config::$isSanitized = config('services.midtrans.is_sanitized', true);
-        \Midtrans\Config::$is3ds = config('services.midtrans.is_3ds', true);
+        \Midtrans\Config::$clientKey = config('services.midtrans.client_key');
+
+        // Cast configuration flags to boolean to avoid 'false' string being truthy.
+        \Midtrans\Config::$isProduction = filter_var(config('services.midtrans.is_production', false), FILTER_VALIDATE_BOOLEAN);
+        \Midtrans\Config::$isSanitized = filter_var(config('services.midtrans.is_sanitized', true), FILTER_VALIDATE_BOOLEAN);
+        \Midtrans\Config::$is3ds = filter_var(config('services.midtrans.is_3ds', true), FILTER_VALIDATE_BOOLEAN);
+
+        // Optional: ensure server key is present to provide clearer error messages.
+        if (empty(\Midtrans\Config::$serverKey)) {
+            throw new \RuntimeException('Midtrans server key tidak dikonfigurasi. Periksa MIDTRANS_SERVER_KEY di .env');
+        }
     }
 
     private function refreshPendingPaymentStatus(Transaksi $transaksi): void
@@ -241,6 +324,20 @@ class TransaksiController extends Controller
 
         DB::transaction(function () use ($orderId, $transactionStatus, $paymentType, $isSuccessful) {
             $transaksi = Transaksi::where('order_id', $orderId)->lockForUpdate()->firstOrFail();
+
+            if ($transaksi->payment_type === 'item_deleted') {
+                return;
+            }
+
+            if ($isSuccessful && $this->hasUnavailableKarya($transaksi)) {
+                $transaksi->update([
+                    'transaction_status' => 'cancel',
+                    'payment_type' => 'item_deleted',
+                ]);
+
+                return;
+            }
+
             $wasSuccessful = in_array($transaksi->transaction_status, ['settlement', 'capture'], true);
 
             // Status tetap diperbarui untuk mencatat perubahan seperti pending, deny, atau expire.
@@ -257,5 +354,12 @@ class TransaksiController extends Controller
                 }
             }
         });
+    }
+
+    private function hasUnavailableKarya(Transaksi $transaksi): bool
+    {
+        $details = $transaksi->details()->with('karya')->get();
+
+        return $details->isEmpty() || $details->contains(fn (TransaksiDetail $detail) => $detail->karya === null);
     }
 }

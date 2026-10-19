@@ -27,7 +27,7 @@
 
                     <!-- Kolom Detail & Aksi -->
                     <div class="col-md-6">
-                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2">
+                        <span class="badge badge-category  px-2 py-1 ">
                             {{ $karya->kategori->nama }}
                         </span>
 
@@ -35,7 +35,7 @@
 
                         <h3 class="text-accent fw-bold mb-4">
 
-                            Rp {{ number_format($karya->harga, 0, ',', '.') }}
+                            {{ $karya->harga == 0 ? 'Gratis' : 'Rp ' . number_format($karya->harga, 0, ',', '.') }}
                         </h3>
 
                         <div class="mb-4">
@@ -57,7 +57,7 @@
                             @endif
                         </div>
 
-                        <hr class="my-4 text-muted opacity-25">
+                        <hr class="my-4 border-custom opacity-100">
 
                         <!-- Form Tambah ke Keranjang -->
                         <form action="{{ route('keranjang.store') }}" method="POST">
@@ -71,14 +71,15 @@
                                         <input type="number" name="jumlah" value="1" min="1" max="{{ $karya->stok }}"
                                             class="form-control text-center" required>
                                     </div>
-                                    <button type="submit" class="btn btn-primary px-4 py-2 fw-semibold">
-                                        + Tambah ke Keranjang
-                                    </button>
-                                @else
-                                    <button type="button" class="btn btn-secondary px-4 py-2 fw-semibold" disabled>
-                                        Stok Habis
-                                    </button>
                                 @endif
+                                  
+
+                                     <button type="submit" class="btn {{ $karya->stok > 0 ? 'bg-accent' : 'btn-secondary' }} btn-sm fw-bold px-4 py-2 w-100" {{ $karya->stok < 1 ? 'disabled' : '' }}>
+                                    <i class="bi bi-cart-plus me-1"></i> Masukkan Keranjang
+                                </button>
+                                    
+                               
+                               
                             </div>
                         </form>
                     </div>

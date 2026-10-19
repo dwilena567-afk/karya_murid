@@ -12,13 +12,7 @@ class VerifikasiController extends Controller
      */
     public function index()
     {
-        // Admin hanya perlu melihat karya yang menunggu keputusan, dengan item terbaru di atas.
-        $karyas = Karya::with(['pembuat', 'kategori'])
-            ->where('status_verifikasi', 'pending')
-            ->latest()
-            ->get();
-
-        return view('verifikasi.index', compact('karyas'));
+        return redirect()->to(route('dashboard.index') . '#verifikasi');
     }
 
     /**
@@ -31,7 +25,7 @@ class VerifikasiController extends Controller
             'status_verifikasi' => 'approved'
         ]);
 
-        return redirect()->route('verifikasi.index')
+        return redirect()->to(route('dashboard.index') . '#verifikasi')
             ->with('success', 'Karya "' . $karya->judul . '" berhasil disetujui dan kini tampil di katalog.');
     }
 
@@ -45,7 +39,7 @@ class VerifikasiController extends Controller
             'status_verifikasi' => 'rejected'
         ]);
 
-        return redirect()->route('verifikasi.index')
+        return redirect()->to(route('dashboard.index') . '#verifikasi')
             ->with('success', 'Karya "' . $karya->judul . '" telah ditolak.');
     }
 }

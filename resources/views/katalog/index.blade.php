@@ -19,8 +19,8 @@
                         <div class="position-relative">
                             <img src="{{ $karya->gambar ? asset('storage/' . $karya->gambar) : 'https://via.placeholder.com/400x300' }}"
                                 class="w-100 object-fit-cover" style="height: 200px;" alt="{{ $karya->judul }}">
-                            <!-- Lencana Kategori Mengambang -->
-                            <span class="badge badge-category position-absolute top-0 end-0 m-2 px-2 py-1">
+                            <!-- Lencana Kategori -->
+                            <span class="badge badge-category position-absolute top-0 end-0 m-2 px-2 py-1 shadow-sm">
                                 {{ ucfirst($karya->kategori?->nama ?? 'Umum') }}
                             </span>
                         </div>
@@ -33,7 +33,7 @@
 
                             <div
                                 class="mt-auto pt-2 border-top border-custom d-flex justify-content-between align-items-center">
-                                <span class="fw-bold text-accent fs-6">Rp{{ number_format($karya->harga, 0, ',', '.') }}</span>
+                                <span class="fw-bold text-accent fs-6">{{ $karya->harga == 0 ? 'Gratis' : 'Rp' . number_format($karya->harga, 0, ',', '.') }}</span>
                                 @if ($karya->stok > 0)
                                 <small class="text-muted" style="font-size: 0.75rem;">Stok: {{ $karya->stok }}</small>
                                 @else
@@ -48,7 +48,7 @@
                                 @csrf
                                 <input type="hidden" name="karya_id" value="{{ $karya->id }}">
                                 <input type="hidden" name="jumlah" value="1">
-                                <button type="submit" class="btn btn-primary btn-sm fw-bold w-100" {{ $karya->stok < 1 ? 'disabled' : '' }}>
+                                <button type="submit" class="btn {{ $karya->stok > 0 ? 'bg-accent' : 'btn-secondary' }} btn-sm fw-bold w-100" {{ $karya->stok < 1 ? 'disabled' : '' }}>
                                     <i class="bi bi-cart-plus me-1"></i> Masukkan Keranjang
                                 </button>
                             </form>

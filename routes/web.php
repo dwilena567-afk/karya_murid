@@ -39,18 +39,18 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/transaksi/{transaksi}/confirm-payment', [TransaksiController::class, 'confirmPayment'])->name('transaksi.confirm-payment');
     
     // Pengguna hanya mengelola karya miliknya melalui resource controller.
-    Route::resource('karyamu', KaryamuController::class)->except(['show']);
+    Route::resource('karyamu', KaryamuController::class)->except(['show'])->middleware('manage-karya');
     
    
 
     
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'manage-karya'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 });
 
-// Verifikasi memakai auth dan admin middleware untuk membatasi keputusan moderasi - Menggunakan Route Model Binding
+// Moderasi karya ditampilkan di dashboard; endpoint keputusan tetap khusus admin.
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/verifikasi', [VerifikasiController::class, 'index'])->name('verifikasi.index');
     Route::patch('/verifikasi/{karya}/approve', [VerifikasiController::class, 'approve'])->name('verifikasi.approve');
