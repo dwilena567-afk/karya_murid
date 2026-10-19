@@ -86,6 +86,15 @@
             color: white;
         }
 
+        .navbar-brand-logo {
+            display: block;
+            height: 35px;
+            width: auto;
+            max-width: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.12));
+        }
+
         .app-page {
             min-width: 0;
         }
@@ -99,7 +108,34 @@
                 margin-top: 0.75rem !important;
                 padding-top: 0.75rem !important;
                 border-top: 1px solid rgba(255, 255, 255, 0.2);
+                width: 100%;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: flex-start;
+                flex-wrap: nowrap;
             }
+
+            .app-account form {
+                order: 1;
+            }
+
+            .app-account .user-meta {
+                order: 2;
+                margin-left: auto;
+            }
+        }
+
+        .app-account {
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .app-account .user-meta {
+            text-align: right;
+        }
+
+        .app-account form {
+            margin: 0;
         }
 
         .sidebar-panel {
@@ -108,6 +144,59 @@
             width: 260px;
             flex: 0 0 260px;
             transition: width 0.2s ease, flex-basis 0.2s ease, padding 0.2s ease;
+        }
+
+        .mobile-filter-backdrop {
+            display: none;
+        }
+
+        .filter-close-mobile {
+            display: none;
+        }
+
+        @media (max-width: 767.98px) {
+            .sidebar-panel.mobile-open {
+                display: block !important;
+                position: fixed;
+                inset: 0 auto 0 0;
+                z-index: 1055;
+                width: min(88vw, 320px);
+                height: 100dvh;
+                overflow-y: auto;
+                border-right: 1px solid var(--wisteria-blue);
+                box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0.3);
+            }
+
+            .mobile-filter-backdrop.is-visible {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 1050;
+                background: rgba(0, 0, 0, 0.45);
+            }
+
+            .filter-close-mobile {
+                display: inline-flex !important;
+            }
+
+            .filter-toggle {
+                display: none !important;
+            }
+
+            .sidebar-panel.is-collapsed {
+                width: min(88vw, 320px);
+                flex-basis: auto;
+                padding: 1.5rem !important;
+            }
+
+            .sidebar-panel.is-collapsed .filter-heading-title,
+            .sidebar-panel.is-collapsed .filter-content {
+                display: block;
+            }
+
+            .sidebar-panel.is-collapsed .filter-toggle {
+                margin-left: auto;
+            }
         }
 
         .sidebar-panel.is-collapsed {
@@ -224,8 +313,8 @@
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary-custom shadow-sm">
         <div class="container-fluid px-3 px-lg-4">
-            <a href="{{ route('beranda.index') }}" class="navbar-brand fw-bold">
-                <i class="bi bi-palette me-2"></i>Karya Murid
+            <a href="{{ route('beranda.index') }}" class="navbar-brand fw-bold d-flex align-items-center" aria-label="Beranda">
+                <img src="{{ asset('images/siskar-logo1.png') }}" alt="SISKAR" class="navbar-brand-logo">
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-navbar"
                 aria-controls="main-navbar" aria-expanded="false" aria-label="Buka navigasi">
@@ -258,9 +347,9 @@
                     @endauth
                 </div>
 
-                <div class="app-account d-flex flex-column flex-lg-row align-items-lg-center gap-2">
+                <div class="app-account d-flex flex-column flex-lg-row align-items-lg-center gap-2 ms-lg-auto">
                     @auth
-                        <div class="px-2">
+                        <div class="user-meta px-2">
                             <div class="text-white small text-end">Halo, <strong>{{ auth()->user()->name }}</strong></div>
                             <div class="text-white opacity-75 text-end" style="font-size: 0.7rem;">{{ ucfirst(auth()->user()->role) }}</div>
                         </div>
@@ -269,8 +358,10 @@
                             <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
                         </form>
                     @else
-                        <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm fw-bold">Sign In</a>
-                        <a href="{{ route('register') }}" class="btn bg-accent btn-sm fw-bold">Sign Up</a>
+                        <div class="d-flex flex-row align-items-center gap-2">
+                            <a href="{{ route('login') }}" class="btn btn-outline-light btn-sm fw-bold">Sign In</a>
+                            <a href="{{ route('register') }}" class="btn bg-accent btn-sm fw-bold">Sign Up</a>
+                        </div>
                     @endauth
                 </div>
             </div>
@@ -286,10 +377,14 @@
 
             <aside class="sidebar-panel p-4 d-none d-md-block shadow-sm" id="filter-sidebar">
                 <div class="filter-heading fw-bold text-primary-custom mb-3 border-bottom border-custom pb-2">
-                    <h6 class="filter-heading-title fw-bold mb-0"><i class="bi bi-search me-1"></i> Cari & Filter</h6>
+                    <h6 class="filter-heading-title fw-bold mb-0">Cari & Filter</h6>
                     <button type="button" class="btn btn-sm btn-outline-secondary filter-toggle" id="filter-sidebar-toggle"
                         aria-label="Ciutkan panel filter" aria-controls="filter-content" aria-expanded="true" title="Ciutkan panel filter">
                         <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary filter-close-mobile" id="filter-sidebar-close"
+                        aria-label="Tutup panel filter" title="Tutup panel filter">
+                        <i class="bi bi-x-lg" aria-hidden="true"></i>
                     </button>
                 </div>
                 <!-- Consolidated Form: Combines search, category, price, and sort -->
@@ -366,10 +461,17 @@
                 </form>
                 </div>
             </aside>
+            <div class="mobile-filter-backdrop" id="mobile-filter-backdrop"></div>
         @endif
 
         <!-- Main Content Area -->
         <main class="flex-grow-1 p-4">
+            @if(request()->routeIs('katalog.index') || request()->routeIs('karyamu.index'))
+                <button type="button" class="btn bg-primary-custom text-white d-md-none mb-3" id="mobile-filter-open"
+                    aria-controls="filter-sidebar" aria-expanded="false">
+                    <i class="bi bi-funnel me-1" aria-hidden="true"></i>Cari & Filter
+                </button>
+            @endif
             @yield('content')
         </main>
     </div>
@@ -423,14 +525,18 @@
         (() => {
             const sidebar = document.getElementById('filter-sidebar');
             const toggle = document.getElementById('filter-sidebar-toggle');
+            const mobileOpen = document.getElementById('mobile-filter-open');
+            const mobileClose = document.getElementById('filter-sidebar-close');
+            const backdrop = document.getElementById('mobile-filter-backdrop');
 
             if (!sidebar || !toggle) return;
 
             const icon = toggle.querySelector('i');
             const storageKey = 'filter-sidebar-collapsed';
+            const mobileMedia = window.matchMedia('(max-width: 767.98px)');
 
             const setCollapsed = (collapsed) => {
-                sidebar.classList.toggle('is-collapsed', collapsed);
+                sidebar.classList.toggle('is-collapsed', !mobileMedia.matches && collapsed);
                 toggle.setAttribute('aria-expanded', String(!collapsed));
                 toggle.setAttribute('aria-label', collapsed ? 'Buka panel filter' : 'Ciutkan panel filter');
                 toggle.title = collapsed ? 'Buka panel filter' : 'Ciutkan panel filter';
@@ -439,9 +545,40 @@
 
             setCollapsed(localStorage.getItem(storageKey) === 'true');
             toggle.addEventListener('click', () => {
+                if (mobileMedia.matches) {
+                    closeMobilePanel();
+                    return;
+                }
+
                 const collapsed = !sidebar.classList.contains('is-collapsed');
                 setCollapsed(collapsed);
                 localStorage.setItem(storageKey, String(collapsed));
+            });
+
+            const closeMobilePanel = () => {
+                sidebar.classList.remove('mobile-open');
+                backdrop?.classList.remove('is-visible');
+                mobileOpen?.setAttribute('aria-expanded', 'false');
+                document.body.classList.remove('overflow-hidden');
+            };
+
+            mobileOpen?.addEventListener('click', () => {
+                sidebar.classList.remove('is-collapsed');
+                sidebar.classList.add('mobile-open');
+                backdrop?.classList.add('is-visible');
+                mobileOpen.setAttribute('aria-expanded', 'true');
+                document.body.classList.add('overflow-hidden');
+            });
+
+            mobileClose?.addEventListener('click', closeMobilePanel);
+            backdrop?.addEventListener('click', closeMobilePanel);
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') closeMobilePanel();
+            });
+
+            mobileMedia.addEventListener('change', () => {
+                closeMobilePanel();
+                setCollapsed(localStorage.getItem(storageKey) === 'true');
             });
         })();
     </script>

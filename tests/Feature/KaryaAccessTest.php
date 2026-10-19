@@ -20,6 +20,39 @@ class KaryaAccessTest extends TestCase
         $this->withoutMiddleware(ValidateCsrfToken::class);
     }
 
+    public function test_homepage_shows_latest_approved_works(): void
+    {
+        $kategori = Kategori::create(['nama' => 'Kategori Tes']);
+        $murid = User::factory()->create(['role' => 'murid']);
+        $approvedKarya = Karya::create([
+            'user_id' => $murid->id,
+            'judul' => 'Karya Terbaru Disetujui',
+            'deskripsi' => 'Karya yang tampil pada beranda.',
+            'kategori_id' => $kategori->id,
+            'harga' => 10000,
+            'stok' => 1,
+            'status_verifikasi' => 'approved',
+        ]);
+        Karya::create([
+            'user_id' => $murid->id,
+            'judul' => 'Karya Belum Disetujui',
+            'deskripsi' => 'Karya ini tidak boleh tampil pada beranda.',
+            'kategori_id' => $kategori->id,
+            'harga' => 10000,
+            'stok' => 1,
+            'status_verifikasi' => 'pending',
+        ]);
+
+        $this->get(route('beranda.index'))
+            ->assertOk()
+            ->assertSee('Karya Terbaru')
+            ->assertSee($approvedKarya->judul)
+            ->assertSee('Pertanyaan Umum')
+            ->assertSee('mailto:mail.smkpgri3malang@gmail.com', false)
+            ->assertSee('https://wa.me/6282133000370', false)
+            ->assertDontSee('Karya Belum Disetujui');
+    }
+
     public function test_buyer_cannot_see_or_access_karyamu_and_dashboard(): void
     {
         $buyer = User::factory()->create(['role' => 'pembeli']);

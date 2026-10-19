@@ -71,14 +71,15 @@
                                         <input type="number" name="jumlah" value="1" min="1" max="{{ $karya->stok }}"
                                             class="form-control text-center" required>
                                     </div>
-                                    <button type="submit" class="btn bg-accent px-4 py-2 fw-semibold">
-                                        + Tambah ke Keranjang
-                                    </button>
-                                @else
-                                    <button type="button" class="btn btn-secondary px-4 py-2 fw-semibold" disabled>
-                                        Stok Habis
-                                    </button>
                                 @endif
+                                  
+
+                                     <button type="submit" class="btn {{ $karya->stok > 0 ? 'bg-accent' : 'btn-secondary' }} btn-sm fw-bold px-4 py-2 w-100" {{ $karya->stok < 1 ? 'disabled' : '' }}>
+                                    <i class="bi bi-cart-plus me-1"></i> Masukkan Keranjang
+                                </button>
+                                    
+                               
+                               
                             </div>
                         </form>
                     </div>
