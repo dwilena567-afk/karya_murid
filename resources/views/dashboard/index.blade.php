@@ -17,6 +17,7 @@
                     <div class="w-100">
                         <p class="text-muted fw-bold mb-1" style="font-size: 0.85rem; letter-spacing: 0.5px;">TOTAL KARYA</p>
                         <h3 class="fw-bold text-dark m-0">{{ number_format($totalKarya) }}</h3>
+                        
 
                         <div class="mt-3">
                             <a href="{{ route('karyamu.index') }}" class="btn btn-sm bg-primary-custom text-white fw-bold px-3">
@@ -98,17 +99,18 @@
                                 @forelse($karyasMenungguVerifikasi as $karya)
                                     <tr>
                                         <td class="px-4 py-3">
-                                            @if($karya->gambar)
-                                                <img src="{{ asset('storage/' . $karya->gambar) }}"
+                                           
+                                                <img src="{{ $karya->gambar ? asset('storage/' . $karya->gambar) : 'https://via.placeholder.com/450x450?text=Tidak+ada+gambar' }}"
                                                     alt="{{ $karya->judul }}"
-                                                    class="rounded object-fit-cover shadow-sm border border-custom"
+                                                    class="rounded image-card clickable-gallery object-fit-cover shadow-sm border border-custom"
                                                     style="width: 80px; height: 80px;">
-                                            @else
-                                                <div class="rounded bg-light border border-custom d-flex align-items-center justify-content-center text-muted"
-                                                    style="width: 80px; height: 80px;" aria-label="Tidak ada gambar">
-                                                    <i class="bi bi-image fs-3"></i>
-                                                </div>
-                                            @endif
+                                                @foreach($karya->gambarTambahan as $gambar)
+                                                    <img src="{{ asset('storage/' . $gambar->gambar) }}"
+                                                        alt="Foto tambahan {{ $loop->iteration }} - {{ $karya->judul }}"
+                                                        class="rounded image-card clickable-gallery object-fit-cover shadow-sm border border-custom mt-1"
+                                                        style="width: 80px; height: 80px;">
+                                                @endforeach
+                                           
                                         </td>
                                         <td class="py-3">
                                             <h6 class="fw-bold mb-1 text-dark">{{ $karya->judul }}</h6>
@@ -246,16 +248,11 @@
                                     <td class="px-4 py-3 fw-bold text-muted">{{ $loop->iteration }}</td>
                                     <td class="py-3">
                                         <div class="d-flex align-items-center gap-3">
-                                            @if($karya->gambar)
-                                                <img src="{{ asset('storage/' . $karya->gambar) }}" alt=""
+                                        
+                                                <img src="{{ $karya->gambar ? asset('storage/' . $karya->gambar) : 'https://via.placeholder.com/450x450?text=Tidak+ada+gambar' }}" 
                                                     class="rounded object-fit-cover border border-custom"
                                                     style="width: 56px; height: 56px;">
-                                            @else
-                                                <div class="rounded bg-light border border-custom d-flex align-items-center justify-content-center text-muted"
-                                                    style="width: 56px; height: 56px;" aria-hidden="true">
-                                                    <i class="bi bi-image"></i>
-                                                </div>
-                                            @endif
+                                          
                                             <span class="fw-semibold text-dark">{{ $karya->judul }}</span>
                                         </div>
                                     </td>
@@ -313,7 +310,7 @@
 
         const ctx = canvas.getContext('2d');
         
-        // Membangun Grafik Garis
+        //  Grafik Garis
         new Chart(ctx, {
             type: 'line',
             data: {

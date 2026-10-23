@@ -51,19 +51,21 @@
 
 <!-- Karya Terbaru -->
 <section class="mb-5" aria-labelledby="latest-works-title">
+    @if($karyasTerbaru->isNotEmpty())
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <div class="text-center w-100">
             <h2 class="h4 fw-bold text-primary-custom mb-1" id="latest-works-title">Karya Terbaru</h2>
             <p class="text-muted small mb-0">Jelajahi karya terbaru dari para siswa.</p>
         </div>
     </div>
+    @endif
 
     <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
         @forelse($karyasTerbaru as $karya)
             <div class="col">
                 <a href="{{ route('katalog.show', $karya->id) }}" class="product-card h-100 d-flex flex-column text-decoration-none text-dark">
                     <div class="position-relative">
-                        <img src="{{ $karya->gambar ? asset('storage/' . $karya->gambar) : 'https://via.placeholder.com/400x300' }}"
+                        <img src="{{ $karya->gambar ? asset('storage/' . $karya->gambar) : 'https://via.placeholder.com/450x450?text=Tidak+ada+gambar' }}"
                             class="w-100 object-fit-cover" style="height: 200px;" alt="{{ $karya->judul }}">
                         <span class="badge badge-category position-absolute top-0 end-0 m-2 px-2 py-1 shadow-sm">
                             {{ ucfirst($karya->kategori?->nama ?? 'Umum') }}
@@ -89,8 +91,8 @@
                 </a>
             </div>
         @empty
-            <div class="col-12">
-                <div class="feature-card p-4 text-center text-muted">
+            <div class="text-center w-100">
+                <div class="p-4 text-center text-muted">
                     <i class="bi bi-inbox fs-2 d-block mb-2" aria-hidden="true"></i>
                     Karya terbaru akan tampil di sini setelah tersedia.
                 </div>

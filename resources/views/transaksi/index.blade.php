@@ -101,13 +101,13 @@
                             </tbody>
                         </table>
                     </div>
+                    @if($pembelian->hasPages())
+                        <div class="d-flex justify-content-center mt-3">
+                            {{ $pembelian->appends(['tab' => 'pembelian'])->links() }}
+                        </div>
+                    @endif
                 </div>
             </div>
-            @if($pembelian->hasPages())
-                <div class="d-flex justify-content-center mt-3">
-                    {{ $pembelian->appends(['tab' => 'pembelian'])->links() }}
-                </div>
-            @endif
         </div>
 
         <!-- TAB 2: PENJUALAN SAYA  -->

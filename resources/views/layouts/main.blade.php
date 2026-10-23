@@ -67,6 +67,10 @@
             border-color: var(--wisteria-blue) !important;
         }
 
+        .clickable-gallery {
+            cursor: pointer;
+        }
+
         .nav-link-custom {
             display: flex;
             align-items: center;
@@ -379,11 +383,11 @@
                 <div class="filter-heading fw-bold text-primary-custom mb-3 border-bottom border-custom pb-2">
                     <h6 class="filter-heading-title fw-bold mb-0">Cari & Filter</h6>
                     <button type="button" class="btn btn-sm btn-outline-secondary filter-toggle" id="filter-sidebar-toggle"
-                        aria-label="Ciutkan panel filter" aria-controls="filter-content" aria-expanded="true" title="Ciutkan panel filter">
+                         aria-controls="filter-content" aria-expanded="true" >
                         <i class="bi bi-chevron-left" aria-hidden="true"></i>
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-secondary filter-close-mobile" id="filter-sidebar-close"
-                        aria-label="Tutup panel filter" title="Tutup panel filter">
+                        >
                         <i class="bi bi-x-lg" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -538,8 +542,7 @@
             const setCollapsed = (collapsed) => {
                 sidebar.classList.toggle('is-collapsed', !mobileMedia.matches && collapsed);
                 toggle.setAttribute('aria-expanded', String(!collapsed));
-                toggle.setAttribute('aria-label', collapsed ? 'Buka panel filter' : 'Ciutkan panel filter');
-                toggle.title = collapsed ? 'Buka panel filter' : 'Ciutkan panel filter';
+              
                 icon.className = collapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-left';
             };
 
@@ -583,20 +586,26 @@
         })();
     </script>
     <script>
-        const images = document.querySelectorAll('.clickable-gallery');
+        const galleries = document.querySelectorAll('.clickable-gallery');
 
-        images.forEach(img => {
-            img.addEventListener('click', function () {
+        galleries.forEach(gallery => {
+            const image = gallery.matches('img') ? gallery : gallery.querySelector('img');
+
+            if (!image) {
+                return;
+            }
+
+            gallery.addEventListener('click', function () {
                 Swal.fire({
-                    imageUrl: this.querySelector('img').src,
+                    imageUrl: image.currentSrc || image.src,
                     imageWidth: 700,
                     width: '750px',
-                   
                     showConfirmButton: false
                 });
             });
         });
     </script>
+    @stack('scripts')
 </body>
 
 </html>

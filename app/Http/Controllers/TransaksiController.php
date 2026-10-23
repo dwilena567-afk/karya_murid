@@ -136,7 +136,7 @@ class TransaksiController extends Controller
     public function index()
     {
        $user = auth()->user();
-        $perPage = 10;
+        $perPage = 7;
 
         // 1. Pembelian Milik User Sendiri
         $pembelian = Transaksi::with(['details.karya'])

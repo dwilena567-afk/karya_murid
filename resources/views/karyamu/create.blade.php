@@ -44,9 +44,13 @@
                         <textarea name="deskripsi" rows="4" class="form-control border-custom" required>{{ old('deskripsi') }}</textarea>
                     </div>
                     <div class="col-12">
-                        <label class="form-label fw-bold">Gambar Karya</label>
-                        <input type="file" name="gambar" class="form-control border-custom @error('gambar') is-invalid @enderror" accept="image/*" required>
+                        <label class="form-label fw-bold">Gambar Karya (maksimal 5 gambar)</label>
+                        <input type="file" name="gambar[]" class="form-control border-custom @error('gambar') is-invalid @enderror @error('gambar.*') is-invalid @enderror" accept="image/jpeg,image/png" multiple required>
+                        <small class="text-muted">Pilih 1 sampai 5 gambar, maksimal 2 MB per gambar.</small>
                         @error('gambar')
+                            <div class="alert alert-danger small py-2 mt-2 mb-0">{{ $message }}</div>
+                        @enderror
+                        @error('gambar.*')
                             <div class="alert alert-danger small py-2 mt-2 mb-0">{{ $message }}</div>
                         @enderror
                     </div>
