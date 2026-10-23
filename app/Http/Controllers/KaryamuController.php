@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 
 class KaryamuController extends Controller
@@ -65,35 +66,49 @@ class KaryamuController extends Controller
 
     public function store(Request $request)
     {
-        // Pemeriksaan ukuran dilakukan sebelum validasi file untuk memberi pesan yang lebih jelas.
-        if ($request->hasFile('gambar') && $request->file('gambar')->getSize() > 2 * 1024 * 1024) {
-            return back()->withInput()->with('error', 'Ukuran gambar maksimal 2 MB. Silakan pilih gambar yang lebih kecil.');
-        }
-
         $request->validate([
             'judul' => 'required|string|max:50',
             'deskripsi' => 'required|string',
             'kategori_id' => 'required|exists:kategoris,id',
             'harga' => 'required|numeric|min:0',
             'stok' => 'required|integer|min:1',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'gambar' => 'required|array|min:1|max:5',
+            'gambar.*' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'gambar.max' => 'Maksimal 5 gambar untuk setiap karya.',
+            'gambar.*.max' => 'Ukuran setiap gambar maksimal 2 MB.',
         ]);
 
-        // File disimpan di disk public agar dapat ditampilkan melalui storage symlink.
-        $gambarPath = $request->file('gambar')->store('karya_images', 'public');
+        $gambarPaths = collect($request->file('gambar'))
+            ->map(fn ($gambar) => $gambar->store('karya_images', 'public'));
 
-        // Karya baru wajib diverifikasi admin sebelum tampil di katalog publik.
-        Karya::create([
-            'user_id' => Auth::id(),
-            'judul' => $request->judul,
-            'deskripsi' => $request->deskripsi,
-            'kategori_id' => $request->kategori_id,
-            'harga' => $request->harga,
-            'stok' => $request->stok,
-            'gambar' => $gambarPath,
-            'status_verifikasi' => 'pending',
-            
-        ]);
+        try {
+            // Karya baru wajib diverifikasi admin sebelum tampil di katalog publik.
+            DB::transaction(function () use ($request, $gambarPaths) {
+                $karya = Karya::create([
+                    'user_id' => Auth::id(),
+                    'judul' => $request->judul,
+                    'deskripsi' => $request->deskripsi,
+                    'kategori_id' => $request->kategori_id,
+                    'harga' => $request->harga,
+                    'stok' => $request->stok,
+                    'gambar' => $gambarPaths->first(),
+                    'status_verifikasi' => 'pending',
+                ]);
+
+                foreach ($gambarPaths->skip(1) as $gambarPath) {
+                    $karya->gambarTambahan()->create(['gambar' => $gambarPath]);
+                }
+            });
+        } catch (Throwable $exception) {
+            if (!Storage::disk('public')->delete($gambarPaths->all())) {
+                Log::error('Gagal membersihkan gambar karya setelah penyimpanan karya gagal.', [
+                    'gambar' => $gambarPaths->all(),
+                ]);
+            }
+
+            throw $exception;
+        }
 
         return redirect()->route('karyamu.index')->with('success', 'Karya berhasil diunggah dan menunggu verifikasi.');
     }
@@ -101,7 +116,7 @@ class KaryamuController extends Controller
     public function edit($id)
     {
         // findOrFail setelah filter user_id mencegah pengeditan karya milik pengguna lain.
-        $karya = Karya::where('user_id', Auth::id())->findOrFail($id);
+        $karya = Karya::with('gambarTambahan')->where('user_id', Auth::id())->findOrFail($id);
         $kategoris = Kategori::all();
         return view('karyamu.edit', compact('karya', 'kategoris'));
     }
@@ -109,11 +124,8 @@ class KaryamuController extends Controller
     public function update(Request $request, $id)
     {
         // Batas kepemilikan diterapkan lagi pada update, bukan hanya pada halaman edit.
-        $karya = Karya::where('user_id', Auth::id())->findOrFail($id);
-
-        if ($request->hasFile('gambar') && $request->file('gambar')->getSize() > 2 * 1024 * 1024) {
-            return back()->withInput()->with('error', 'Ukuran gambar maksimal 2 MB. Silakan pilih gambar yang lebih kecil.');
-        }
+        $karya = Karya::with('gambarTambahan')->where('user_id', Auth::id())->findOrFail($id);
+        $slotGambarTersedia = 5 - $karya->semua_gambar->count();
 
         $request->validate([
             'judul' => 'required|string|max:30',
@@ -122,9 +134,13 @@ class KaryamuController extends Controller
             'harga' => 'required|numeric|min:0',
             'stok' => 'required|integer|min:1',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'gambar_tambahan' => ['nullable', 'array', 'max:' . $slotGambarTersedia],
+            'gambar_tambahan.*' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'gambar_tambahan.max' => 'Jumlah gambar untuk satu karya maksimal 5.',
+            'gambar_tambahan.*.max' => 'Ukuran setiap gambar maksimal 2 MB.',
         ]);
 
-        // Setiap perubahan mengulang proses verifikasi agar data yang berubah ditinjau kembali.
         $data = [
             'judul' => $request->judul,
             'deskripsi' => $request->deskripsi,
@@ -134,25 +150,101 @@ class KaryamuController extends Controller
             'status_verifikasi' => 'pending', 
         ];
 
+        $gambarPathLama = $karya->gambar;
+        $gambarPathBaru = null;
+        $gambarTambahanBaru = collect();
+
         if ($request->hasFile('gambar')) {
-            // Hapus file lama setelah file baru tersedia agar gambar sebelumnya tidak menumpuk.
-            if ($karya->gambar) {
-                Storage::disk('public')->delete($karya->gambar);
-            }
-            $data['gambar'] = $request->file('gambar')->store('karya_images', 'public');
+            $gambarPathBaru = $request->file('gambar')->store('karya_images', 'public');
+            $data['gambar'] = $gambarPathBaru;
         }
 
-        $karya->update($data);
+        if ($request->hasFile('gambar_tambahan')) {
+            $gambarTambahanBaru = collect($request->file('gambar_tambahan'))
+                ->map(fn ($gambar) => $gambar->store('karya_images', 'public'));
+        }
+
+        try {
+            DB::transaction(function () use ($karya, $data, $gambarTambahanBaru) {
+                $karya->update($data);
+
+                foreach ($gambarTambahanBaru as $gambarPath) {
+                    $karya->gambarTambahan()->create(['gambar' => $gambarPath]);
+                }
+            });
+        } catch (Throwable $exception) {
+            $pathsToClean = $gambarTambahanBaru->all();
+            if ($gambarPathBaru) {
+                $pathsToClean[] = $gambarPathBaru;
+            }
+
+            if ($pathsToClean && !Storage::disk('public')->delete($pathsToClean)) {
+                Log::error('Gagal membersihkan gambar setelah pembaruan karya gagal.', [
+                    'karya_id' => $karya->id,
+                    'gambar' => $pathsToClean,
+                ]);
+            }
+
+            throw $exception;
+        }
+
+        if ($gambarPathBaru && $gambarPathLama && !Storage::disk('public')->delete($gambarPathLama)) {
+            Log::error('Gagal menghapus gambar utama lama setelah gambar utama karya diperbarui.', [
+                'karya_id' => $karya->id,
+                'gambar' => $gambarPathLama,
+            ]);
+        }
 
         return redirect()->route('karyamu.index')->with('success', 'Karya berhasil diperbarui');
 
-       
+    }
+
+    public function destroyImage($id, string $gambar)
+    {
+        $karya = Karya::with('gambarTambahan')->where('user_id', Auth::id())->findOrFail($id);
+
+        if ($gambar === 'utama') {
+            abort_unless($karya->gambar, 404);
+
+            $gambarPath = $karya->gambar;
+            $gambarTambahan = $karya->gambarTambahan->first();
+
+            if ($gambarTambahan) {
+                $karya->gambar = $gambarTambahan->gambar;
+                $gambarTambahan->delete();
+            } else {
+                $karya->gambar = null;
+            }
+
+            $karya->status_verifikasi = 'pending';
+            $karya->save();
+        } else {
+            $gambarTambahan = $karya->gambarTambahan()->findOrFail($gambar);
+            $gambarPath = $gambarTambahan->gambar;
+            $gambarTambahan->delete();
+
+            $karya->update(['status_verifikasi' => 'pending']);
+        }
+
+        if (!Storage::disk('public')->delete($gambarPath)) {
+            Log::error('Gagal menghapus gambar karya dari penyimpanan.', [
+                'karya_id' => $karya->id,
+                'gambar' => $gambarPath,
+            ]);
+
+            return redirect()->route('karyamu.edit', $karya)
+                ->with('error', 'Gambar berhasil dilepas dari karya, tetapi file gagal dihapus dari penyimpanan.');
+        }
+
+        return redirect()->route('karyamu.edit', $karya)
+            ->with('success', 'Gambar berhasil dihapus.');
     }
 
     public function destroy($id)
     {
         // Cari berdasarkan user_id agar endpoint hapus tidak dapat dipakai lintas akun.
-        $karya = Karya::where('user_id', Auth::id())->findOrFail($id);
+        $karya = Karya::with('gambarTambahan')->where('user_id', Auth::id())->findOrFail($id);
+        $gambarPaths = $karya->semua_gambar->all();
 
         DB::transaction(function () use ($karya) {
             $pendingTransactionIds = TransaksiDetail::where('karya_id', $karya->id)
@@ -177,15 +269,15 @@ class KaryamuController extends Controller
         });
 
       
-        if ($karya->gambar && !Storage::disk('public')->delete($karya->gambar)) {
+        if ($gambarPaths && !Storage::disk('public')->delete($gambarPaths)) {
             Log::error('Gagal menghapus gambar karya setelah karya dihapus.', [
                 'karya_id' => $id,
-                'gambar' => $karya->gambar,
+                'gambar' => $gambarPaths,
             ]);
 
             return redirect()->route('karyamu.index')->with(
                 'error',
-                'Karya berhasil dihapus, tetapi gambar di penyimpanan gagal dihapus.'
+                'Karya berhasil dihapus, tetapi beberapa gambar di penyimpanan gagal dihapus.'
             );
         }
 

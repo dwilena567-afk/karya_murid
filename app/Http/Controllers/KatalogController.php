@@ -60,13 +60,20 @@ class KatalogController extends Controller
     public function show(Karya $karya)
     {
         // Relasi kategori diperlukan untuk detail tampilan; model binding menangani 404 otomatis.
-        $karya->load('kategori');
+        $karya->load(['kategori', 'gambarTambahan']);
 
         // Validasi ulang status mencegah karya yang belum disetujui diakses melalui URL langsung.
         if ($karya->status_verifikasi !== 'approved') {
             abort(404, 'Karya tidak ditemukan atau belum disetujui.');
         }
 
-        return view('katalog.show', compact('karya'));
+        $karyasRandom = Karya::with(['pembuat', 'kategori'])
+            ->where('status_verifikasi', 'approved')
+            ->where('id', '!=', $karya->id)
+            ->inRandomOrder()
+            ->take(4)
+            ->get();
+
+        return view('katalog.show', compact('karya', 'karyasRandom'));
     }
 }

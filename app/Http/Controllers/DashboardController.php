@@ -36,7 +36,7 @@ class DashboardController extends Controller
         $karyasMenungguVerifikasi = collect();
 
         if ($user->role === 'admin') {
-            $karyasMenungguVerifikasi = Karya::with(['pembuat', 'kategori'])
+            $karyasMenungguVerifikasi = Karya::with(['pembuat', 'kategori', 'gambarTambahan'])
                 ->where('status_verifikasi', 'pending')
                 ->latest()
                 ->paginate(5, ['*'], 'verifikasi_page')

@@ -39,6 +39,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/transaksi/{transaksi}/confirm-payment', [TransaksiController::class, 'confirmPayment'])->name('transaksi.confirm-payment');
     
     // Pengguna hanya mengelola karya miliknya melalui resource controller.
+    Route::delete('/karyamu/{id}/gambar/{gambar}', [KaryamuController::class, 'destroyImage'])
+        ->name('karyamu.gambar.destroy')
+        ->middleware('manage-karya');
     Route::resource('karyamu', KaryamuController::class)->except(['show'])->middleware('manage-karya');
     
    
