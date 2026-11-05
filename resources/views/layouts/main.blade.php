@@ -28,10 +28,17 @@
             color: #333;
             font-family: Verdana, Geneva, Tahoma, sans-serif;
             overflow-y: auto;
+            overflow-x: hidden;
             scrollbar-width: none;
             /* Firefox */
             -ms-overflow-style: none;
             /* IE 10+ */
+        }
+
+        html.swal2-shown,
+        body.swal2-shown {
+            padding-right: 0 !important;
+            margin-right: 0 !important;
         }
 
         html::-webkit-scrollbar,
@@ -340,6 +347,9 @@
                         <a href="{{ route('transaksi.index') }}" class="nav-link-custom {{ request()->routeIs('transaksi.*') ? 'active' : '' }}">
                             <i class="bi bi-arrow-left-right me-2"></i>Transaksi
                         </a>
+                        <a href="{{ route('chat.index') }}" class="nav-link-custom {{ request()->routeIs('chat.*') ? 'active' : '' }}">
+                            <i class="bi bi-chat-dots me-2"></i>Pesan
+                        </a>
                         @if(in_array(auth()->user()->role, ['murid', 'admin'], true))
                             <a href="{{ route('karyamu.index') }}" class="nav-link-custom {{ request()->routeIs('karyamu.*') ? 'active' : '' }}">
                                 <i class="bi bi-palette me-2"></i>Karyamu
@@ -382,11 +392,11 @@
             <aside class="sidebar-panel p-4 d-none d-md-block shadow-sm" id="filter-sidebar">
                 <div class="filter-heading fw-bold text-primary-custom mb-3 border-bottom border-custom pb-2">
                     <h6 class="filter-heading-title fw-bold mb-0">Cari & Filter</h6>
-                    <button type="button" class="btn btn-sm btn-outline-secondary filter-toggle" id="filter-sidebar-toggle"
+                    <button type="button" class="btn btn-sm btn-outline-secondary border-custom filter-toggle" id="filter-sidebar-toggle"
                          aria-controls="filter-content" aria-expanded="true" >
                         <i class="bi bi-chevron-left" aria-hidden="true"></i>
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary filter-close-mobile" id="filter-sidebar-close"
+                    <button type="button" class="btn btn-sm btn-outline-secondary border-custom filter-close-mobile" id="filter-sidebar-close"
                         >
                         <i class="bi bi-x-lg" aria-hidden="true"></i>
                     </button>
@@ -419,6 +429,8 @@
                     </div>
                     @endif
 
+                   
+
                     <!-- Category Filter -->
                     <div>
                         <label class="form-label text-muted fw-bold mb-1" style="font-size: 0.75rem;">Kategori</label>
@@ -435,6 +447,8 @@
 
                         </select>
                     </div>
+
+                    
 
                     <!-- Price Range Filter -->
                     <div>
@@ -455,6 +469,21 @@
                             <option value="termahal" {{ request('sort') == 'termahal' ? 'selected' : '' }}>Termahal</option>
                         </select>
                     </div>
+
+                     @if(request()->routeIs('karyamu.index'))
+                    <!-- Sort Dropdown Status Karya -->
+                    <div>
+                        <label class="form-label text-muted fw-bold mb-1" style="font-size: 0.75rem;">Urutkan
+                            Berdasarkan Status</label>
+                        <!-- <select name="status" class="form-select form-select-sm border-custom" onchange="this.form.submit()"> -->
+                        <select name="status" class="form-select form-select-sm border-custom" >
+                            <option value="" {{ !request()->filled('status') ? 'selected' : '' }}>Semua Status</option>
+                            <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Disetujui</option>
+                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu</option>
+                            <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Ditolak</option>
+                        </select>
+                    </div>
+                    @endif
 
                     <!-- Action Buttons -->
                     <div class="d-flex flex-column gap-2 mt-2">
@@ -490,6 +519,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        window.Swal = Swal.mixin({
+            heightAuto: false,
+            scrollbarPadding: false
+        });
+
         @if(session('success'))
             Swal.fire({ icon: 'success', title: 'Berhasil', text: @json(session('success')), confirmButtonColor: '#054A91' });
         @elseif(session('error'))

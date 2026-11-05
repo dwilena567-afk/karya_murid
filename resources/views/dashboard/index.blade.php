@@ -250,7 +250,7 @@
                                         <div class="d-flex align-items-center gap-3">
                                         
                                                 <img src="{{ $karya->gambar ? asset('storage/' . $karya->gambar) : 'https://via.placeholder.com/450x450?text=Tidak+ada+gambar' }}" 
-                                                    class="rounded object-fit-cover border border-custom"
+                                                    class="image-card clickable-gallery rounded object-fit-cover border border-custom"
                                                     style="width: 56px; height: 56px;">
                                           
                                             <span class="fw-semibold text-dark">{{ $karya->judul }}</span>

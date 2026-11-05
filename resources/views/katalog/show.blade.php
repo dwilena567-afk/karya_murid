@@ -1,14 +1,155 @@
 @extends('layouts.main')
 
 @section('content')
+    <style>
+        .dropdown-menu-secondary {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .dropdown-menu-secondary .dropdown-item:hover,
+        .dropdown-menu-secondary .dropdown-item:focus,
+        .dropdown-menu-secondary .dropdown-item.active {
+            color: #fff;
+            background-color: #bebebe;
+        }
+
+        .dropdown-menu-secondary .dropdown-item.item-owner:hover,
+        .dropdown-menu-secondary .dropdown-item.item-owner:focus,
+        .dropdown-menu-secondary .dropdown-item.item-owner.active {
+            color: #fff !important;
+            background-color: #0d6efd !important;
+        }
+
+        .dropdown-menu-secondary .dropdown-item.item-danger:hover,
+        .dropdown-menu-secondary .dropdown-item.item-danger:focus,
+        .dropdown-menu-secondary .dropdown-item.item-danger.active {
+            color: #fff !important;
+            background-color: #dc3545 !important;
+        }
+
+        .dropdown-menu-secondary .dropdown-item.item-warning:hover,
+        .dropdown-menu-secondary .dropdown-item.item-warning:focus,
+        .dropdown-menu-secondary .dropdown-item.item-warning.active {
+            color: #fff !important;
+            background-color: #ffc107 !important;
+        }
+
+
+        
+
+        .dropdown-menu-secondary li,
+        .dropdown-menu-secondary form {
+            width: 100%;
+        }
+
+        .dropdown-menu-secondary .dropdown-item {
+            width: 100%;
+            min-height: 40px;
+            padding: 0.55rem 1rem;
+            display: flex;
+            align-items: center;
+            border: 0;
+            border-radius: 0;
+        }
+
+        .dropdown-menu-secondary form .dropdown-item {
+            text-align: left;
+        }
+
+        .catalog-gallery-frame {
+            width: 100%;
+            height: 450px;
+        }
+
+        .catalog-gallery-frame:hover {
+            transform: none;
+        }
+
+        .catalog-gallery-frame img[data-gallery-main] {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        @media (max-width: 767.98px) {
+            .catalog-gallery-frame {
+                height: 320px;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .catalog-gallery-frame {
+                height: 260px;
+            }
+        }
+    </style>
     @php($gambarKarya = $karya->semua_gambar)
     <div class="container pb-5">
 
         
-        <div class="mb-4">
+        <div class="mb-4 d-flex justify-content-between align-items-center">
             <a href="{{ route('katalog.index') }}" class="btn btn-outline-secondary btn-sm">
                 &larr; Kembali ke Katalog
             </a>
+
+            <div class="dropdown">
+                <button  class="btn  btn-sm btn-outline-secondary  filter-toggle d-flex align-items-center justify-content-center"
+                    type="button" data-bs-toggle="dropdown" aria-expanded="false"
+                    style="width: 44px; height: 40px;" aria-label="Menu karya">
+                    <i class="bi bi-three-dots-vertical fs-5"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm dropdown-menu-secondary">
+                    @auth
+                        @if(auth()->id() !== $karya->user_id)
+                            <li>
+                                <a class="dropdown-item" href="{{ route('chat.show', $karya->user_id) }}">
+                                    <i class="bi bi-chat-dots me-2"></i>Hubungi Penjual
+                                </a>
+                            </li>
+                        @elseif(auth()->id() === $karya->user_id)
+                            <li>
+                                <a class="dropdown-item item-owner" href="{{ route('karyamu.edit', $karya->id) }}">
+                                    <i class="bi bi-pencil-square me-2"></i>Edit Karya
+                                </a>
+                            </li>
+                        @endif
+                    @else
+                        <li>
+                            <a class="dropdown-item" href="{{ route('login') }}">
+                                <i class="bi bi-chat-dots me-2"></i>Hubungi Penjual
+                            </a>
+                        </li>
+                    @endauth
+
+                    @auth
+                        @if(auth()->user()->role === 'admin')
+                            
+                            <li>
+                                <form action="{{ route('katalog.hide', $karya) }}" method="POST"
+                                    data-confirm="Sembunyikan karya ini dari katalog?" data-confirm-title="Konfirmasi Penyembunyian">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="dropdown-item text-warning item-warning">
+                                        <i class="bi bi-eye-slash me-2"></i>Sembunyikan dari Katalog
+                                    </button>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{{ route('katalog.destroy', $karya) }}" method="POST"
+                                    data-confirm="Hapus karya ini secara permanen beserta gambarnya?" data-confirm-title="Konfirmasi Penghapusan">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="dropdown-item text-danger item-danger">
+                                        <i class="bi bi-trash me-2"></i>Hapus Karya 
+                                    </button>
+                                </form>
+                            </li>
+                        @endif
+                    @endauth
+                </ul>
+            </div>
         </div>
 
       
@@ -18,13 +159,12 @@
 
                   
                     <div class="col-md-6">
-                        <div class="image-card clickable-gallery bg-light rounded-3 overflow-hidden text-center p-2 position-relative"
+                        <div class="image-card catalog-gallery-frame clickable-gallery bg-light rounded-3 overflow-hidden text-center p-2 position-relative"
                             data-image-gallery>
                             <img data-gallery-main
                                 src="{{ $gambarKarya->isNotEmpty() ? asset('storage/' . $gambarKarya->first()) : 'https://via.placeholder.com/450x450?text=Tidak+ada+gambar' }}"
                                 alt="{{ $karya->judul }}"
-                                class="img-fluid rounded-3 border border-custom object-fit-cover w-100"
-                                style="max-height: 450px;">
+                                class="rounded-3 border border-custom">
                             @if($gambarKarya->count() > 1)
                                 <button type="button" data-gallery-control="previous" aria-label="Gambar sebelumnya"
                                     class="btn btn-outline-secondary btn-sm fw-bold shadow-sm position-absolute top-50 start-0 translate-middle-y ms-3 rounded-2"
@@ -122,7 +262,7 @@
                         <a href="{{ route('katalog.show', $randomkarya->id) }}"
                             class="product-card h-100 d-flex flex-column text-decoration-none text-dark">
                             <div class="position-relative">
-                                <img src="{{ $randomkarya->gambar ? asset('storage/' . $randomkarya->gambar) : 'https://via.placeholder.com/400x300' }}"
+                                <img src="{{ $randomkarya->gambar ? asset('storage/' . $randomkarya->gambar) : 'https://via.placeholder.com/450x450?text=Tidak+ada+gambar' }}"
                                     class="w-100 object-fit-cover" style="height: 200px;" alt="{{ $randomkarya->judul }}">
                                 <span class="badge badge-category position-absolute top-0 end-0 m-2 px-2 py-1 shadow-sm">
                                     {{ ucfirst($randomkarya->kategori?->nama ?? 'Umum') }}
