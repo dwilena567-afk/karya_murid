@@ -38,6 +38,10 @@ class KaryamuController extends Controller
             $query->where('harga', '<=', $request->max_harga);
         }
 
+        if ($request->filled('status') && in_array($request->status, ['pending', 'approved', 'rejected'], true)) {
+            $query->where('status_verifikasi', $request->status);
+        }
+
         // Terbaru menjadi urutan default agar perubahan terakhir terlihat lebih dahulu.
         if ($request->filled('sort')){
             if ($request->sort == 'termurah'){
@@ -73,7 +77,20 @@ class KaryamuController extends Controller
             'harga' => 'required|numeric|min:0',
             'stok' => 'required|integer|min:1',
             'gambar' => 'required|array|min:1|max:5',
-            'gambar.*' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'gambar.*' => [
+                'required',
+                'file',
+                'max:2048',
+                function ($attribute, $value, $fail) {
+                    $declaredMime = $value->getMimeType();
+                    $imageInfo = @getimagesize($value->getRealPath());
+                    $contentMime = $imageInfo['mime'] ?? null;
+                    if (!in_array($declaredMime, ['image/jpeg', 'image/png'], true)
+                        && !in_array($contentMime, ['image/jpeg', 'image/png'], true)) {
+                        $fail('Gambar harus berupa file PNG atau JPEG yang valid.');
+                    }
+                },
+            ],
         ], [
             'gambar.max' => 'Maksimal 5 gambar untuk setiap karya.',
             'gambar.*.max' => 'Ukuran setiap gambar maksimal 2 MB.',
@@ -127,15 +144,25 @@ class KaryamuController extends Controller
         $karya = Karya::with('gambarTambahan')->where('user_id', Auth::id())->findOrFail($id);
         $slotGambarTersedia = 5 - $karya->semua_gambar->count();
 
+        $validImage = function ($attribute, $value, $fail) {
+            $declaredMime = $value->getMimeType();
+            $imageInfo = @getimagesize($value->getRealPath());
+            $contentMime = $imageInfo['mime'] ?? null;
+            if (!in_array($declaredMime, ['image/jpeg', 'image/png'], true)
+                && !in_array($contentMime, ['image/jpeg', 'image/png'], true)) {
+                $fail('Gambar harus berupa file PNG atau JPEG yang valid.');
+            }
+        };
+
         $request->validate([
             'judul' => 'required|string|max:30',
             'deskripsi' => 'required|string',
             'kategori_id' => 'required|exists:kategoris,id',
             'harga' => 'required|numeric|min:0',
             'stok' => 'required|integer|min:1',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'gambar' => ['nullable', 'file', 'max:2048', $validImage],
             'gambar_tambahan' => ['nullable', 'array', 'max:' . $slotGambarTersedia],
-            'gambar_tambahan.*' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'gambar_tambahan.*' => ['required', 'file', 'max:2048', $validImage],
         ], [
             'gambar_tambahan.max' => 'Jumlah gambar untuk satu karya maksimal 5.',
             'gambar_tambahan.*.max' => 'Ukuran setiap gambar maksimal 2 MB.',

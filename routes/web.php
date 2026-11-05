@@ -11,6 +11,7 @@ use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\VerifikasiController;
 use App\Http\Controllers\KaryamuController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ChatController;
 
 
 
@@ -43,6 +44,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('karyamu.gambar.destroy')
         ->middleware('manage-karya');
     Route::resource('karyamu', KaryamuController::class)->except(['show'])->middleware('manage-karya');
+
+    Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+    Route::get('/chat/{user}', [ChatController::class, 'show'])->name('chat.show');
+    Route::post('/chat/{user}', [ChatController::class, 'store'])->name('chat.store');
     
    
 
@@ -58,6 +63,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/verifikasi', [VerifikasiController::class, 'index'])->name('verifikasi.index');
     Route::patch('/verifikasi/{karya}/approve', [VerifikasiController::class, 'approve'])->name('verifikasi.approve');
     Route::patch('/verifikasi/{karya}/reject', [VerifikasiController::class, 'reject'])->name('verifikasi.reject');
+    Route::patch('/katalog/{karya}/hide', [VerifikasiController::class, 'hide'])->name('katalog.hide');
+    Route::delete('/katalog/{karya}', [VerifikasiController::class, 'destroy'])->name('katalog.destroy');
 });
 
 require __DIR__.'/auth.php';

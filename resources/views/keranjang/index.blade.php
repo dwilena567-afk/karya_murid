@@ -90,7 +90,7 @@
                                 class="fw-bold text-accent fs-5">{{ $totalHarga == 0 ? 'Gratis' : 'Rp' . number_format($totalHarga, 0, ',', '.') }}</span>
                         </div>
 
-                        <!-- Form Checkout Terhubung dengan TransaksiController -->
+                        
                         <form action="{{ route('transaksi.store') }}" method="POST" id="checkout-form">
                             @csrf
                             <button type="submit" id="checkout-btn" class="btn bg-accent w-100 fw-bold shadow-sm py-2"
@@ -109,13 +109,13 @@
                             document.getElementById('checkout-form').addEventListener('submit', function () {
                                 const btn = document.getElementById('checkout-btn');
 
-                                // Disable button to prevent double-submission
+                               
                                 btn.disabled = true;
 
-                                // Hide normal text and icon
+                                
                                 btn.querySelector('.btn-text').classList.add('d-none');
 
-                                // Show loading spinner and text
+                                
                                 btn.querySelector('.spinner-border').classList.remove('d-none');
                                 btn.querySelector('.spinner-text').classList.remove('d-none');
                             });

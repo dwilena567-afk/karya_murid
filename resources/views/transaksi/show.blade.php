@@ -64,6 +64,10 @@
                     <small class="text-muted">Total Pembayaran</small>
                     <div class="fw-bold text-accent">{{ $transaksi->gross_amount == 0 ? 'Gratis' : 'Rp ' . number_format($transaksi->gross_amount, 0, ',', '.') }}</div>
                 </div>
+                <div class="col-md-6">
+                    <small class="text-muted">Tempat Pengambilan</small>
+                    <div class="fw-bold ">Ruang Administrasi SMK PGRI 3 MALANG</div>
+                </div>
             </div>
         </div>
     </div>

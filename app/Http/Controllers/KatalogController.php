@@ -70,6 +70,7 @@ class KatalogController extends Controller
         $karyasRandom = Karya::with(['pembuat', 'kategori'])
             ->where('status_verifikasi', 'approved')
             ->where('id', '!=', $karya->id)
+            ->where('stok', '>', 0)
             ->inRandomOrder()
             ->take(4)
             ->get();

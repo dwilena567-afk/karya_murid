@@ -18,8 +18,13 @@
     
     @forelse($karyas as $karya)
     <div class="col">
-        <div class="product-card h-100 d-flex flex-column">
-            
+        <div class="product-card h-100 d-flex flex-column" >
+
+        @if($karya->status_verifikasi != 'pending' && $karya->status_verifikasi != 'rejected')
+        <a href="{{ route('katalog.show', $karya->id) }}">
+        @endif
+
+           
             <!-- Gambar Produk -->
             <div class="position-relative">
                 <img src="{{ $karya->gambar ? asset('storage/'.$karya->gambar) : 'https://via.placeholder.com/400x300' }}" 
@@ -52,7 +57,7 @@
                     <small class="text-danger" style="font-size: 0.75rem;">Stok Habis</small>
                     @endif
                 </div>
-
+        </a>
                 <!-- Tombol Aksi (Edit & Hapus) -->
                 <div class="mt-auto pt-3 action-buttons d-flex gap-2">
                     <a href="{{ route('karyamu.edit', $karya->id) }}" class="btn btn-sm btn-outline-primary flex-grow-1 fw-bold" title="Edit Karya">

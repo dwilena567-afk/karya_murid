@@ -47,7 +47,7 @@
                     </div>
                     <div class="col-12">
                         <label class="form-label fw-bold">Gambar Utama</label>
-                        <input type="file" name="gambar" class="form-control border-custom @error('gambar') is-invalid @enderror" accept="image/*">
+                        <input type="file" name="gambar" class="form-control border-custom @error('gambar') is-invalid @enderror" accept=".jpg,.jpeg,.png,image/jpeg,image/png">
                         <small class="text-muted">Pilih jika ingin mengganti gambar utama.</small>
                         @error('gambar')
                             <div class="alert alert-danger small py-2 mt-2 mb-0">{{ $message }}</div>
@@ -56,7 +56,7 @@
                     <div class="col-12">
                         <label class="form-label fw-bold">Tambah Gambar</label>
                         <input type="file" name="gambar_tambahan[]" class="form-control border-custom @error('gambar_tambahan') is-invalid @enderror @error('gambar_tambahan.*') is-invalid @enderror"
-                            accept="image/jpeg,image/png" multiple {{ $karya->semua_gambar->count() >= 5 ? 'disabled' : '' }}>
+                            accept=".jpg,.jpeg,.png,image/jpeg,image/png" multiple {{ $karya->semua_gambar->count() >= 5 ? 'disabled' : '' }}>
                         <small class="text-muted">Pilih hingga {{ max(0, 5 - $karya->semua_gambar->count()) }} gambar baru. Maksimal 5 gambar untuk satu karya, 2 MB per gambar.</small>
                         @error('gambar_tambahan')
                             <div class="alert alert-danger small py-2 mt-2 mb-0">{{ $message }}</div>
